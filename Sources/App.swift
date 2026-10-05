@@ -32,6 +32,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var appNames: [String: String] = [:]
     private let cache = SessionCache()
     private var transcriptSizes: [String: UInt64] = [:]
+    private var connection = Connection.State.disconnected
+    private var lastConnectionCheck = 0.0
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         if let id = Bundle.main.bundleIdentifier,
@@ -41,6 +43,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         Store.ensureDirs()
         Lang.use(prefs.language)
+        if Self.runningFromTemporaryLocation {
+            askToMoveToApplications()
+            return
+        }
         board.onClick = { [weak self] record in self?.reveal(record) }
         board.onMenu = { [weak self] event, view in
             guard let self else { return }
@@ -63,6 +69,91 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             MainActor.assumeIsolated { self?.refresh() }
         }
         timer?.tolerance = 0.1
+        setUpConnection()
+    }
+
+    // MARK: - Connection to Claude Code
+
+    /// Opened straight from the disk image, or from a quarantined download that macOS runs from a temporary
+    /// read-only copy: hooks pointing there would break as soon as it closes.
+    private static var runningFromTemporaryLocation: Bool {
+        let path = Bundle.main.bundlePath
+        if path.contains("/AppTranslocation/") { return true }
+        return (try? URL(fileURLWithPath: path).resourceValues(forKeys: [.volumeIsReadOnlyKey]))?.volumeIsReadOnly == true
+    }
+
+    private func askToMoveToApplications() {
+        let alert = NSAlert()
+        alert.messageText = L("Please move Watchlamp to your Applications folder first")
+        alert.informativeText = L("Drag Watchlamp into the Applications folder and open it from there. Run from the disk image or the Downloads folder, it can't stay connected to Claude Code.")
+        alert.addButton(withTitle: L("Quit Watchlamp"))
+        bringToFront()
+        alert.runModal()
+        NSApp.terminate(nil)
+    }
+
+    private func setUpConnection() {
+        connection = Connection.state()
+        switch connection {
+        case .connected:
+            break
+        case .elsewhere:
+            try? Connection.connect()   // the app was moved: point the hooks at this copy
+            connection = Connection.state()
+        case .disconnected, .noClaude:
+            if !prefs.askedToConnect { DispatchQueue.main.async { self.offerToConnect() } }
+        }
+    }
+
+    /// First launch: explain what connecting does, and offer launch at login alongside.
+    private func offerToConnect() {
+        prefs.askedToConnect = true
+        let alert = NSAlert()
+        alert.messageText = L("Connect Watchlamp to Claude Code?")
+        alert.informativeText = L("Watchlamp adds a few hooks to Claude Code's settings (~/.claude/settings.json) so it can see what each session is doing. The current file is backed up first.")
+        alert.addButton(withTitle: L("Connect to Claude Code"))
+        alert.addButton(withTitle: L("Not now"))
+        alert.showsSuppressionButton = true
+        alert.suppressionButton?.title = L("Launch at login")
+        alert.suppressionButton?.state = .on
+        bringToFront()
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        if alert.suppressionButton?.state == .on && SMAppService.mainApp.status != .enabled {
+            try? SMAppService.mainApp.register()
+        }
+        connectNow()
+    }
+
+    private func connectNow() {
+        do {
+            try Connection.connect()
+        } catch {
+            showSettingsError(error)
+        }
+        connection = Connection.state()
+        refresh()
+    }
+
+    private func disconnectNow() {
+        do {
+            try Connection.disconnect()
+        } catch {
+            showSettingsError(error)
+        }
+        connection = Connection.state()
+        refresh()
+    }
+
+    private func showSettingsError(_ error: Error) {
+        let alert = NSAlert()
+        alert.messageText = L("Couldn't update Claude Code's settings")
+        alert.informativeText = (error as? Connection.Failure)?.message ?? error.localizedDescription
+        bringToFront()
+        alert.runModal()
+    }
+
+    private func bringToFront() {
+        if #available(macOS 14, *) { NSApp.activate() } else { NSApp.activate(ignoringOtherApps: true) }
     }
 
     // MARK: - Refresh loop
@@ -73,6 +164,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if now - lastMaintenance >= 2 {
             lastMaintenance = now
             list = maintain(list, now: now)
+        }
+        if now - lastConnectionCheck >= 10 {
+            lastConnectionCheck = now
+            connection = Connection.state()
         }
         list.sort { ($0.started, $0.sessionId) < ($1.started, $1.sessionId) }
         sessions = list
@@ -124,7 +219,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func items(now: Double) -> [LampItem] {
         guard !sessions.isEmpty else {
             return [LampItem(id: "none", label: "Claude", state: .idle, status: L("No sessions"),
-                             detail: L("Lights up when Claude Code starts working"),
+                             detail: connection == .connected ? L("Lights up when Claude Code starts working")
+                                 : L("Not connected to Claude Code yet. Right-click to connect."),
                              tooltip: L("Watchlamp: no Claude Code session detected yet"), record: nil, dark: true)]
         }
         var totals: [String: Int] = [:]
@@ -283,7 +379,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let alert = NSAlert()
             alert.messageText = L("Couldn't change the login item")
             alert.informativeText = error.localizedDescription + "\n" + L("You can also add it in System Settings › General › Login Items.")
-            if #available(macOS 14, *) { NSApp.activate() } else { NSApp.activate(ignoringOtherApps: true) }
+            bringToFront()
             alert.runModal()
         }
     }
@@ -305,6 +401,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.autoenablesItems = false
         let now = Date().timeIntervalSince1970
         menu.addItem(ActionItem("Watchlamp", enabled: false))
+        if connection != .connected {
+            menu.addItem(ActionItem(L("Connect to Claude Code")) { [weak self] in self?.connectNow() })
+        }
         if sessions.isEmpty { menu.addItem(ActionItem(L("No Claude Code sessions"), enabled: false)) }
         for item in items(now: now) {
             guard let record = item.record else { continue }
@@ -354,6 +453,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }] + Lang.choices.map { choice in
             ActionItem(choice.name, checked: prefs.language == choice.code) { [weak self] in self?.setLanguage(choice.code) }
         }))
+        if connection == .connected {
+            menu.addItem(ActionItem(L("Connected to Claude Code"), checked: true, enabled: false))
+            menu.addItem(ActionItem(L("Disconnect from Claude Code")) { [weak self] in self?.disconnectNow() })
+        }
         menu.addItem(ActionItem(L("Launch at login"), checked: SMAppService.mainApp.status == .enabled) { [weak self] in
             self?.toggleLogin()
         })

@@ -78,3 +78,16 @@
 "Data analysis" = "데이터 분석";
 "Install dependencies" = "의존성 설치";
 "Project docs" = "프로젝트 문서";
+"Connect to Claude Code" = "Claude Code에 연결";
+"Connected to Claude Code" = "Claude Code에 연결됨";
+"Disconnect from Claude Code" = "Claude Code 연결 해제";
+"Disconnected from Claude Code" = "Claude Code 연결을 해제했습니다";
+"Connect Watchlamp to Claude Code?" = "Watchlamp를 Claude Code에 연결할까요?";
+"Watchlamp adds a few hooks to Claude Code's settings (~/.claude/settings.json) so it can see what each session is doing. The current file is backed up first." = "Watchlamp가 각 세션의 상태를 알 수 있도록 Claude Code 설정(~/.claude/settings.json)에 훅 몇 개를 추가합니다. 변경하기 전에 기존 파일을 백업합니다.";
+"Not now" = "나중에";
+"Couldn't update Claude Code's settings" = "Claude Code 설정을 업데이트할 수 없습니다";
+"Claude Code isn't installed yet (there is no ~/.claude folder). Install it, then choose “Connect to Claude Code” from this menu." = "Claude Code가 아직 설치되지 않았습니다(~/.claude 폴더가 없음). 설치한 다음 이 메뉴에서 'Claude Code에 연결'을 선택하세요.";
+"Claude Code's settings file isn't valid JSON, so it was left unchanged." = "Claude Code 설정 파일이 올바른 JSON이 아니어서 변경하지 않았습니다.";
+"Please move Watchlamp to your Applications folder first" = "먼저 Watchlamp를 '응용 프로그램' 폴더로 옮겨 주세요";
+"Drag Watchlamp into the Applications folder and open it from there. Run from the disk image or the Downloads folder, it can't stay connected to Claude Code." = "Watchlamp를 '응용 프로그램' 폴더로 끌어다 놓고 거기서 여세요. 디스크 이미지나 '다운로드' 폴더에서 바로 실행하면 Claude Code와의 연결을 유지할 수 없습니다.";
+"Not connected to Claude Code yet. Right-click to connect." = "아직 Claude Code에 연결되지 않음. 오른쪽 클릭하여 연결";

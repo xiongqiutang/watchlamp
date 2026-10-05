@@ -78,3 +78,16 @@
 "Data analysis" = "Анализ данных";
 "Install dependencies" = "Установить зависимости";
 "Project docs" = "Документация проекта";
+"Connect to Claude Code" = "Подключить к Claude Code";
+"Connected to Claude Code" = "Подключено к Claude Code";
+"Disconnect from Claude Code" = "Отключить от Claude Code";
+"Disconnected from Claude Code" = "Отключено от Claude Code";
+"Connect Watchlamp to Claude Code?" = "Подключить Watchlamp к Claude Code?";
+"Watchlamp adds a few hooks to Claude Code's settings (~/.claude/settings.json) so it can see what each session is doing. The current file is backed up first." = "Watchlamp добавит несколько хуков в настройки Claude Code (~/.claude/settings.json), чтобы видеть, что происходит в каждом сеансе. Перед изменением текущий файл сохраняется в резервную копию.";
+"Not now" = "Не сейчас";
+"Couldn't update Claude Code's settings" = "Не удалось обновить настройки Claude Code";
+"Claude Code isn't installed yet (there is no ~/.claude folder). Install it, then choose “Connect to Claude Code” from this menu." = "Claude Code ещё не установлен (нет папки ~/.claude). Установите его, затем выберите в этом меню «Подключить к Claude Code».";
+"Claude Code's settings file isn't valid JSON, so it was left unchanged." = "Файл настроек Claude Code не является корректным JSON, поэтому он не был изменён.";
+"Please move Watchlamp to your Applications folder first" = "Сначала переместите Watchlamp в папку «Программы»";
+"Drag Watchlamp into the Applications folder and open it from there. Run from the disk image or the Downloads folder, it can't stay connected to Claude Code." = "Перетащите Watchlamp в папку «Программы» и откройте его оттуда. При запуске с образа диска или из папки «Загрузки» он не сможет оставаться подключённым к Claude Code.";
+"Not connected to Claude Code yet. Right-click to connect." = "Ещё не подключено к Claude Code. Щёлкните правой кнопкой, чтобы подключить";

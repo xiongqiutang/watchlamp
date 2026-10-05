@@ -31,7 +31,7 @@ rm -rf "$DEST"
 cp -R build/Watchlamp.app "$DEST"
 touch "$DEST"
 
-python3 scripts/hooks.py install "$DEST/Contents/MacOS/Watchlamp"
+"$DEST/Contents/MacOS/Watchlamp" connect
 open "$DEST"
 
 echo

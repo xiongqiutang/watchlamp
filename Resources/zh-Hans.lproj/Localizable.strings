@@ -78,3 +78,16 @@
 "Data analysis" = "数据分析";
 "Install dependencies" = "安装依赖";
 "Project docs" = "项目文档";
+"Connect to Claude Code" = "连接 Claude Code";
+"Connected to Claude Code" = "已连接 Claude Code";
+"Disconnect from Claude Code" = "断开 Claude Code";
+"Disconnected from Claude Code" = "已断开 Claude Code";
+"Connect Watchlamp to Claude Code?" = "要把 Watchlamp 连接到 Claude Code 吗？";
+"Watchlamp adds a few hooks to Claude Code's settings (~/.claude/settings.json) so it can see what each session is doing. The current file is backed up first." = "Watchlamp 会在 Claude Code 的设置（~/.claude/settings.json）里加几条钩子，用来知道每个会话在做什么。修改前会先备份原文件。";
+"Not now" = "以后再说";
+"Couldn't update Claude Code's settings" = "没能修改 Claude Code 的设置";
+"Claude Code isn't installed yet (there is no ~/.claude folder). Install it, then choose “Connect to Claude Code” from this menu." = "还没有安装 Claude Code（找不到 ~/.claude 文件夹）。装好后，在这个菜单里选“连接 Claude Code”。";
+"Claude Code's settings file isn't valid JSON, so it was left unchanged." = "Claude Code 的设置文件不是有效的 JSON，所以没有修改它。";
+"Please move Watchlamp to your Applications folder first" = "请先把 Watchlamp 移到“应用程序”文件夹";
+"Drag Watchlamp into the Applications folder and open it from there. Run from the disk image or the Downloads folder, it can't stay connected to Claude Code." = "把 Watchlamp 拖进“应用程序”文件夹，再从那里打开。直接在安装盘或“下载”文件夹里运行的话，它没法一直和 Claude Code 保持连接。";
+"Not connected to Claude Code yet. Right-click to connect." = "还没连接 Claude Code，右键连接";

@@ -12,9 +12,16 @@ cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp -R Resources/*.lproj "$APP/Contents/Resources/"
 for f in "$APP"/Contents/Resources/*.lproj/*.strings; do plutil -convert binary1 "$f"; done
 
-swiftc -Osize -swift-version 5 -target "$(uname -m)-apple-macos13.0" \
-  -framework AppKit -framework ServiceManagement -Xlinker -dead_strip \
-  -o "$BIN" Sources/*.swift
+# One binary for Apple silicon and Intel Macs.
+pids=()
+for arch in arm64 x86_64; do
+  swiftc -Osize -swift-version 5 -target "$arch-apple-macos13.0" \
+    -framework AppKit -framework ServiceManagement -framework JavaScriptCore -Xlinker -dead_strip \
+    -o "build/Watchlamp-$arch" Sources/*.swift &
+  pids+=($!)
+done
+for pid in "${pids[@]}"; do wait "$pid"; done
+lipo -create -output "$BIN" build/Watchlamp-arm64 build/Watchlamp-x86_64
 strip -x "$BIN"
 
 # App icon, drawn by a build-time script. Up to 256 px is plenty for a menu bar app.

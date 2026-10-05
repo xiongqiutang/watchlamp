@@ -78,3 +78,16 @@
 "Data analysis" = "Análisis de datos";
 "Install dependencies" = "Instalar dependencias";
 "Project docs" = "Documentación del proyecto";
+"Connect to Claude Code" = "Conectar con Claude Code";
+"Connected to Claude Code" = "Conectado con Claude Code";
+"Disconnect from Claude Code" = "Desconectar de Claude Code";
+"Disconnected from Claude Code" = "Desconectado de Claude Code";
+"Connect Watchlamp to Claude Code?" = "¿Conectar Watchlamp con Claude Code?";
+"Watchlamp adds a few hooks to Claude Code's settings (~/.claude/settings.json) so it can see what each session is doing. The current file is backed up first." = "Watchlamp añade algunos hooks a la configuración de Claude Code (~/.claude/settings.json) para saber qué hace cada sesión. Antes se guarda una copia del archivo actual.";
+"Not now" = "Ahora no";
+"Couldn't update Claude Code's settings" = "No se pudo actualizar la configuración de Claude Code";
+"Claude Code isn't installed yet (there is no ~/.claude folder). Install it, then choose “Connect to Claude Code” from this menu." = "Claude Code aún no está instalado (no existe la carpeta ~/.claude). Instálalo y luego elige «Conectar con Claude Code» en este menú.";
+"Claude Code's settings file isn't valid JSON, so it was left unchanged." = "El archivo de configuración de Claude Code no es un JSON válido, así que no se modificó.";
+"Please move Watchlamp to your Applications folder first" = "Primero mueve Watchlamp a la carpeta Aplicaciones";
+"Drag Watchlamp into the Applications folder and open it from there. Run from the disk image or the Downloads folder, it can't stay connected to Claude Code." = "Arrastra Watchlamp a la carpeta Aplicaciones y ábrelo desde allí. Si se ejecuta desde la imagen de disco o la carpeta Descargas, no puede mantenerse conectado a Claude Code.";
+"Not connected to Claude Code yet. Right-click to connect." = "Aún sin conexión con Claude Code. Clic derecho para conectar";

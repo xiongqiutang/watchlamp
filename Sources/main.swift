@@ -6,6 +6,18 @@ func argument(_ index: Int, _ fallback: String) -> String { arguments.count > in
 switch arguments.first {
 case "hook":
     exit(Hook.run())
+case "connect", "disconnect":
+    // Used by install.sh / uninstall.sh; the app does the same from its menu.
+    Lang.use(UserDefaults.standard.string(forKey: "language"))
+    do {
+        if arguments.first == "connect" { try Connection.connect() } else { try Connection.disconnect() }
+        print(L(arguments.first == "connect" ? "Connected to Claude Code" : "Disconnected from Claude Code"))
+    } catch {
+        print((error as? Connection.Failure)?.message ?? error.localizedDescription)
+        exit(1)
+    }
+case "connection":
+    print(Connection.state())
 case "login":
     Lang.use(UserDefaults.standard.string(forKey: "language"))
     Tools.login(argument(1, "status"))

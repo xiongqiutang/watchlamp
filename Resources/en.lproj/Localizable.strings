@@ -78,3 +78,16 @@
 "Data analysis" = "Data analysis";
 "Install dependencies" = "Install dependencies";
 "Project docs" = "Project docs";
+"Connect to Claude Code" = "Connect to Claude Code";
+"Connected to Claude Code" = "Connected to Claude Code";
+"Disconnect from Claude Code" = "Disconnect from Claude Code";
+"Disconnected from Claude Code" = "Disconnected from Claude Code";
+"Connect Watchlamp to Claude Code?" = "Connect Watchlamp to Claude Code?";
+"Watchlamp adds a few hooks to Claude Code's settings (~/.claude/settings.json) so it can see what each session is doing. The current file is backed up first." = "Watchlamp adds a few hooks to Claude Code's settings (~/.claude/settings.json) so it can see what each session is doing. The current file is backed up first.";
+"Not now" = "Not now";
+"Couldn't update Claude Code's settings" = "Couldn't update Claude Code's settings";
+"Claude Code isn't installed yet (there is no ~/.claude folder). Install it, then choose “Connect to Claude Code” from this menu." = "Claude Code isn't installed yet (there is no ~/.claude folder). Install it, then choose “Connect to Claude Code” from this menu.";
+"Claude Code's settings file isn't valid JSON, so it was left unchanged." = "Claude Code's settings file isn't valid JSON, so it was left unchanged.";
+"Please move Watchlamp to your Applications folder first" = "Please move Watchlamp to your Applications folder first";
+"Drag Watchlamp into the Applications folder and open it from there. Run from the disk image or the Downloads folder, it can't stay connected to Claude Code." = "Drag Watchlamp into the Applications folder and open it from there. Run from the disk image or the Downloads folder, it can't stay connected to Claude Code.";
+"Not connected to Claude Code yet. Right-click to connect." = "Not connected to Claude Code yet. Right-click to connect.";

@@ -76,6 +76,11 @@ final class Prefs {
         get { defaults.object(forKey: "edgeMode") as? Int ?? 1 }
         set { defaults.set(newValue, forKey: "edgeMode") }
     }
+    /// Set once the first-launch "connect to Claude Code?" question has been asked.
+    var askedToConnect: Bool {
+        get { defaults.bool(forKey: "askedToConnect") }
+        set { defaults.set(newValue, forKey: "askedToConnect") }
+    }
     var hideWhenEmpty: Bool {
         get { defaults.bool(forKey: "hideWhenEmpty") }
         set { defaults.set(newValue, forKey: "hideWhenEmpty") }

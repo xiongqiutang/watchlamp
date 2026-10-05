@@ -65,6 +65,28 @@ start=$(python3 -c 'import time; print(time.time())')
 for _ in $(seq 20); do send PreToolUse '"tool_name":"Read","tool_input":{"file_path":"/x"}'; done
 python3 -c "import time; print('  hook: %.1f ms per event (incl. 10ms test sleep)' % ((time.time() - $start) * 1000 / 20))"
 
+# Connecting edits settings.json in place: other settings keep their order, other hooks survive.
+check() { if eval "$2"; then printf '  ok    %s\n' "$1"; else printf '  FAIL  %s\n' "$1"; fails=$((fails + 1)); fi; }
+export WATCHLAMP_CLAUDE_DIR="$WATCHLAMP_DIR/claude"
+mkdir -p "$WATCHLAMP_CLAUDE_DIR"
+SETTINGS="$WATCHLAMP_CLAUDE_DIR/settings.json"
+printf '%s\n' '{' '  "theme": "auto",' '  "hooks": {' '    "Stop": [' '      {' '        "hooks": [' '          {' \
+  '            "type": "command",' '            "command": "say done"' '          }' '        ]' '      }' '    ]' '  },' \
+  '  "zeta": [' '    1,' '    2' '  ]' '}' > "$SETTINGS"
+cp "$SETTINGS" "$WATCHLAMP_DIR/original.json"
+ours='[.hooks[][] | .hooks[] | select(.command | test("Watchlamp"))] | length'
+"$BIN" connect >/dev/null
+check "connect adds the 16 hooks" '[[ $(jq "$ours" "$SETTINGS") == 16 ]]'
+check "connect keeps other hooks" '[[ $(jq -r ".hooks.Stop[0].hooks[0].command" "$SETTINGS") == "say done" ]]'
+check "connect keeps the key order" '[[ $(jq -r "keys_unsorted | join(\",\")" "$SETTINGS") == "theme,hooks,zeta" ]]'
+check "connection reports connected" '[[ $("$BIN" connection) == connected ]]'
+"$BIN" connect >/dev/null
+check "connecting twice adds nothing" '[[ $(jq "$ours" "$SETTINGS") == 16 ]]'
+"$BIN" disconnect >/dev/null
+check "disconnect restores the file byte for byte" 'cmp -s "$SETTINGS" "$WATCHLAMP_DIR/original.json"'
+printf '{ "broken": ' > "$SETTINGS"
+check "invalid JSON is left alone" '! "$BIN" connect >/dev/null && [[ $(cat "$SETTINGS") == "{ \"broken\": " ]]'
+
 # Every language must translate every English string.
 en_keys=$(plutil -convert json -o - Resources/en.lproj/Localizable.strings | jq -r 'keys[]' | sort)
 for f in Resources/*.lproj/Localizable.strings; do

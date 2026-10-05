@@ -32,17 +32,31 @@
 
 > 小提示：MacBook 菜单栏图标太多时，macOS 会把放不下的图标藏到刘海后面。菜单栏里看不到小圆点时，右键灯板打开的是同一个菜单。
 
-## 安装 / 更新 / 卸载
+## 安装
+
+1. 下载 [Watchlamp 的 dmg 安装包](https://github.com/xiongqiutang/watchlamp/releases/latest)，双击打开。
+2. 把 Watchlamp 拖进"应用程序"文件夹，再从"应用程序"里打开它。
+3. 第一次打开会问要不要连接 Claude Code，点"连接 Claude Code"（"登录时自动启动"默认已勾上）。
+
+需要 macOS 13 或更新版本，Apple 芯片和 Intel 芯片的 Mac 都能用。安装包已签名并经过苹果公证，打开时不会被拦截。
+还没装 Claude Code 也没关系：装好以后在菜单里点"连接 Claude Code"。
+
+- **连接做了什么**：在 `~/.claude/settings.json` 里加上 Watchlamp 的钩子。改之前会把原文件备份到
+  `~/.claude/watchlamp/backups/`，只增删命令里带 `Watchlamp` 的钩子，其他设置原样保留。
+- **更新**：先退出 Watchlamp，把新版拖进"应用程序"替换旧版，再打开。
+- **卸载**：菜单里点"断开 Claude Code"，退出 Watchlamp，把它拖到废纸篓。
+  直接删掉也没关系，留下的钩子找不到 App 时什么都不做；想清干净的话再删掉 `~/.claude/watchlamp`。
+
+### 从源码安装
+
+需要 Xcode 或 Command Line Tools（`swiftc`）：
 
 ```bash
 git clone https://github.com/xiongqiutang/watchlamp.git
 cd watchlamp
-./install.sh     # 编译 → 装到 ~/Applications/Watchlamp.app → 写入钩子 → 启动
-./uninstall.sh   # 移除钩子、登录项、App 和状态文件
+./install.sh     # 编译 → 装到 ~/Applications/Watchlamp.app → 连接 Claude Code → 启动
+./uninstall.sh   # 断开 Claude Code，移除登录项、App 和状态文件
 ```
-
-需要 macOS 13 或更新版本、Xcode 或 Command Line Tools（`swiftc`）和 python3。安装时会先把
-`~/.claude/settings.json` 备份到 `~/.claude/watchlamp/backups/`，只增删命令里带 `Watchlamp` 的钩子，其他设置原样保留。
 
 ## 工作原理
 
@@ -55,7 +69,7 @@ Claude Code ──hook 事件(JSON)──▶ Watchlamp hook ──▶ ~/.claude/
 - 钩子注册在 `~/.claude/settings.json`：SessionStart / UserPromptSubmit / PreToolUse / PostToolUse /
   PermissionRequest / Notification / Stop / StopFailure / SubagentStart/Stop 等 16 个事件。
 - `Watchlamp hook` 每次约 15 ms，不输出任何内容、永远返回 0，不会拦截或改变 Claude 的行为。
-- 整个 App 约 420 KB；CPU 约 0.8%，内存约 15 MB（macOS 上一个只有菜单栏图标和一个窗口的空白 App 就要约 12 MB）。
+- 整个 App 约 800 KB（Apple 芯片和 Intel 两份代码都在里面）；CPU 约 0.8%，内存约 15 MB（macOS 上一个只有菜单栏图标和一个窗口的空白 App 就要约 12 MB）。
 - 会话的 Claude Code 进程退出后，灯会在 2 秒内自动消失；12 小时没有动静的会话也会被清理。
 - 后台子代理 / 工作流还在跑时灯保持亮着；后台 shell（比如 dev server）不算"运行中"。
 
@@ -67,13 +81,26 @@ Claude Code ──hook 事件(JSON)──▶ Watchlamp hook ──▶ ~/.claude/
 ## 开发
 
 ```
-Sources/                  Swift 源码：Hook（事件→状态）、Model、Store、Board（灯板）、EdgeGlow（屏幕边框）、App（菜单）、Lang（多语言）
+Sources/                  Swift 源码：Hook（事件→状态）、Model、Store、Board（灯板）、EdgeGlow（屏幕边框）、
+                          App（菜单）、Connection（连接 / 断开 Claude Code）、Lang（多语言）
 Resources/*.lproj/        各语言的界面文字（键就是英文原文，缺的翻译会显示英文；selftest.sh 会检查每种语言是否齐全）
-scripts/hooks.py          安装 / 移除钩子
-scripts/selftest.sh       用模拟事件跑一遍状态机
+scripts/selftest.sh       用模拟事件跑一遍状态机，再测连接 / 断开和各语言翻译
 scripts/devtools.sh       开发版命令（不打包进 App）：snapshot 离屏渲染灯板截图（可指定语言）、status 列出会话
+scripts/release.sh        打发布包：Developer ID 签名 → 苹果公证 → 做 dmg → dmg 再公证
 scripts/RenderIcon.swift  编译时画 App 图标
 ```
+
+`build.sh` 同时编译 Apple 芯片和 Intel 两种架构。命令行也能连接 / 断开：
+`Watchlamp.app/Contents/MacOS/Watchlamp connect`（或 `disconnect`、`connection` 查看状态）。
+
+发新版本：改 `Resources/Info.plist` 里的版本号（`CFBundleShortVersionString`、`CFBundleVersion`），然后运行
+
+```bash
+NOTARY_PROFILE=<公证凭据名> scripts/release.sh   # 生成 dist/Watchlamp-<版本>.dmg
+```
+
+需要钥匙串里有 "Developer ID Application" 证书（有多张时自动选有效期最长的，也可以用 `SIGN_ID` 指定），
+以及用 `xcrun notarytool store-credentials <公证凭据名>` 存好的公证凭据。
 
 ---
 
