@@ -22,6 +22,7 @@ struct Metrics {
     var textScale: CGFloat = 1
 
     var pad: CGFloat { max(12, d * 0.2) }   // the glow past this is faint, and clipped by the board's rounded edge
+    var topPad: CGFloat { pad + d * 0.08 }   // a little more above the lamps, where the glow rises
     var bezel: CGFloat { max(2, d * 0.075) }
     var lampGap: CGFloat { max(8, d * 0.14) }
     var lineGap: CGFloat { max(3, d * 0.045) }
@@ -51,13 +52,13 @@ struct Metrics {
     func boardSize(count: Int) -> NSSize {
         let c = CGFloat(columns(count)), r = CGFloat(rows(count))
         return NSSize(width: pad * 2 + c * cellWidth + (c - 1) * columnSpacing,
-                      height: pad * 2 + r * cellHeight + (r - 1) * rowSpacing)
+                      height: topPad + pad + r * cellHeight + (r - 1) * rowSpacing)
     }
 
     func cellRect(_ index: Int, count: Int, board: NSSize) -> CGRect {
         let c = columns(count)
         let column = CGFloat(rtl ? c - 1 - index % c : index % c), row = CGFloat(index / c)
-        let top = pad + row * (cellHeight + rowSpacing)
+        let top = topPad + row * (cellHeight + rowSpacing)
         return CGRect(x: pad + column * (cellWidth + columnSpacing), y: board.height - top - cellHeight,
                       width: cellWidth, height: cellHeight)
     }
