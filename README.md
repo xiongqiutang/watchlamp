@@ -75,7 +75,7 @@ Claude Code ──hook 事件(JSON)──▶ Watchlamp hook ──▶ ~/.claude/
 - 钩子注册在 `~/.claude/settings.json`：SessionStart / UserPromptSubmit / PreToolUse / PostToolUse /
   PermissionRequest / Notification / Stop / StopFailure / SubagentStart/Stop 等 16 个事件。
 - `Watchlamp hook` 每次约 15 ms，不输出任何内容、永远返回 0，不会拦截或改变 Claude 的行为。
-- 整个 App 约 1 MB（Apple 芯片和 Intel 两份代码都在里面），安装包约 0.5 MB；CPU 不到 1%，内存约 16 MB（macOS 上一个只有菜单栏图标和一个窗口的空白 App 就要约 12 MB）。
+- 整个 App 约 1 MB（Apple 芯片和 Intel 两份代码都在里面），安装包约 0.6 MB；CPU 不到 1%，内存约 16 MB（macOS 上一个只有菜单栏图标和一个窗口的空白 App 就要约 12 MB）。
   提示音在一个单独的短进程里播放（`Watchlamp play-sound`），音频组件不会加载进 Watchlamp 本身；
   音量超过 100% 时用系统的峰值限幅器放大，不会破音。
 - 只有点"检查更新"（读取 thermport.com/watchlamp/version.json）或发送评价、建议时才联网，其他时候不发出任何网络请求。

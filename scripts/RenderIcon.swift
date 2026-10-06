@@ -1,4 +1,5 @@
-// Draws the Watchlamp icon (a 1024 px PNG): the board's lamp on a dark tile.
+// Draws the Watchlamp icon (a 1024 px PNG): the board's "your turn" lamp, yellow with a raised hand, glowing on a
+// dark tile. The lamp is drawn the way Board.swift draws it (bezel, glass, shine, rim, bloom and halo).
 // Used by build.sh only, so none of this ships inside the app.
 import AppKit
 
@@ -18,54 +19,52 @@ let tile = NSBezierPath(roundedRect: NSRect(x: s * 0.1, y: s * 0.1, width: s * 0
                         xRadius: s * 0.18, yRadius: s * 0.18)
 NSGradient(starting: NSColor(white: 0.17, alpha: 1), ending: NSColor(white: 0.06, alpha: 1))?.draw(in: tile, angle: -90)
 
-let green = NSColor(srgbRed: 0x30 / 255.0, green: 0xD1 / 255.0, blue: 0x58 / 255.0, alpha: 1)
-let d = s * 0.5
+let yellow = NSColor(srgbRed: 1, green: 0xD6 / 255.0, blue: 0x0A / 255.0, alpha: 1)
+let d = s * 0.54
 let outer = NSRect(x: (s - d) / 2, y: (s - d) / 2, width: d, height: d)
 let lens = outer.insetBy(dx: d * 0.075, dy: d * 0.075)
 
+// The soft light around a lit lamp, kept inside the tile.
 NSGraphicsContext.saveGraphicsState()
-let glow = NSShadow()
-glow.shadowColor = green
-glow.shadowBlurRadius = s * 0.1
-glow.shadowOffset = .zero
-glow.set()
-green.setFill()
+tile.addClip()
+let center = NSPoint(x: s / 2, y: s / 2)
+NSGradient(colors: [0.5, 0.3, 0.1, 0].map { yellow.withAlphaComponent($0) }, atLocations: [0, 0.6, 0.78, 1],
+           colorSpace: .sRGB)?.draw(fromCenter: center, radius: 0, toCenter: center, radius: d * 0.8, options: [])
+let halo = NSShadow()
+halo.shadowColor = yellow
+halo.shadowBlurRadius = d * 0.14
+halo.shadowOffset = .zero
+halo.set()
+yellow.setFill()
 NSBezierPath(ovalIn: lens).fill()
 NSGraphicsContext.restoreGraphicsState()
 
-NSGradient(starting: NSColor(white: 0.34, alpha: 1), ending: NSColor(white: 0.1, alpha: 1))?
+// Metal bezel, glass lens with its highlight, and the thin dark rim between them.
+NSGradient(starting: NSColor(white: 0.32, alpha: 1), ending: NSColor(white: 0.1, alpha: 1))?
     .draw(in: NSBezierPath(ovalIn: outer), angle: -90)
 let glass = NSBezierPath(ovalIn: lens)
-NSGradient(colors: [mix(green, 0.55, .white), green, mix(green, 0.32, .black)], atLocations: [0, 0.55, 1],
+NSGradient(colors: [mix(yellow, 0.55, .white), yellow, mix(yellow, 0.32, .black)], atLocations: [0, 0.55, 1],
            colorSpace: .sRGB)?.draw(in: glass, relativeCenterPosition: NSPoint(x: 0, y: 0.24))
 NSGradient(colors: [NSColor(white: 1, alpha: 0.45), NSColor(white: 1, alpha: 0)], atLocations: [0, 1],
            colorSpace: .sRGB)?.draw(in: glass, relativeCenterPosition: NSPoint(x: -0.2, y: 0.6))
+let rimWidth = d * 0.012
+let rim = NSBezierPath(ovalIn: lens.insetBy(dx: rimWidth / 2, dy: rimWidth / 2))
+rim.lineWidth = rimWidth
+NSColor(white: 0, alpha: 0.45).setStroke()
+rim.stroke()
 
-// The comet that circles the bezel while Claude works: bright head, tail fading out behind it.
-let center = NSPoint(x: s / 2, y: s / 2)
-let ringRadius = d / 2 - d * 0.075 / 2
-let ringWidth = d * 0.075 * 0.9
-let headAngle: CGFloat = 18, tailLength: CGFloat = 160, steps = 80
-let light = mix(green, 0.75, .white)
-for i in 0..<steps {
-    let t0 = CGFloat(i) / CGFloat(steps), t1 = CGFloat(i + 1) / CGFloat(steps)   // 0 = tail end, 1 = head
-    let arc = NSBezierPath()
-    arc.appendArc(withCenter: center, radius: ringRadius, startAngle: headAngle + tailLength * (1 - t0),
-                  endAngle: headAngle + tailLength * (1 - t1), clockwise: true)
-    arc.lineWidth = ringWidth
-    light.withAlphaComponent(pow(t1, 1.6)).setStroke()
-    arc.stroke()
+// The raised hand, dark on the bright lens, as the board draws it on yellow.
+if let symbol = NSImage(systemSymbolName: "hand.raised.fill", accessibilityDescription: nil)?
+    .withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: d * 0.42, weight: .bold)) {
+    let glyph = symbol.size
+    let ink = NSImage(size: glyph, flipped: false) { rect in
+        symbol.draw(in: rect)
+        NSColor(white: 0.04, alpha: 0.86).set()
+        rect.fill(using: .sourceAtop)
+        return true
+    }
+    ink.draw(in: NSRect(x: (s - glyph.width) / 2, y: (s - glyph.height) / 2, width: glyph.width, height: glyph.height))
 }
-NSGraphicsContext.saveGraphicsState()
-let headGlow = NSShadow()
-headGlow.shadowColor = light
-headGlow.shadowBlurRadius = ringWidth * 1.2
-headGlow.shadowOffset = .zero
-headGlow.set()
-light.setFill()
-let head = NSPoint(x: center.x + ringRadius * cos(headAngle * .pi / 180), y: center.y + ringRadius * sin(headAngle * .pi / 180))
-NSBezierPath(ovalIn: NSRect(x: head.x - ringWidth / 2, y: head.y - ringWidth / 2, width: ringWidth, height: ringWidth)).fill()
-NSGraphicsContext.restoreGraphicsState()
 
 NSGraphicsContext.restoreGraphicsState()
 try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path))
