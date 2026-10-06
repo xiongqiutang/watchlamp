@@ -9,6 +9,6 @@ DEV="build/dev/watchlamp-dev"
 if [ ! -x "$DEV" ] || [ -n "$(find Sources -name '*.swift' -newer "$DEV" | head -1)" ]; then
   mkdir -p build/dev
   swiftc -Onone -swift-version 5 -D DEVTOOLS -target "$(uname -m)-apple-macos13.0" \
-    -framework AppKit -framework ServiceManagement -o "$DEV" Sources/*.swift
+    -framework AppKit -framework ServiceManagement -framework UserNotifications -o "$DEV" Sources/*.swift
 fi
 exec "$DEV" "$@"

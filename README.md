@@ -78,7 +78,7 @@ Claude Code ──hook 事件(JSON)──▶ Watchlamp hook ──▶ ~/.claude/
 - 整个 App 约 1 MB（Apple 芯片和 Intel 两份代码都在里面），安装包约 0.6 MB；CPU 不到 1%，内存约 16 MB（macOS 上一个只有菜单栏图标和一个窗口的空白 App 就要约 12 MB）。
   提示音在一个单独的短进程里播放（`Watchlamp play-sound`），音频组件不会加载进 Watchlamp 本身；
   音量超过 100% 时用系统的峰值限幅器放大，不会破音。
-- 只有点"检查更新"（读取 thermport.com/watchlamp/version.json）或发送评价、建议时才联网，其他时候不发出任何网络请求。
+- 启动时和之后每天检查一次更新（读取 thermport.com/watchlamp/version.json，在一个单独的短进程里完成，网络组件不会加载进 Watchlamp 本身），有新版本时发一条系统通知；除此之外，只有点"检查更新"或发送评价、建议时才联网。
 - 会话的 Claude Code 进程退出后，灯会在 2 秒内自动消失；12 小时没有动静的会话也会被清理。
 - 后台子代理 / 工作流还在跑时灯保持亮着；后台 shell（比如 dev server）不算"运行中"。
 

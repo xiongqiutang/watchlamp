@@ -8,6 +8,8 @@ case "hook":
     exit(Hook.run())
 case "play-sound":
     exit(Player.run(argument(1, ""), volume: Double(argument(2, "1")) ?? 1))
+case "fetch-update":
+    exit(Updates.fetchAndPrint())
 case "connect", "disconnect":
     // Used by install.sh / uninstall.sh; the app does the same from its menu.
     Lang.use(UserDefaults.standard.string(forKey: "language"))

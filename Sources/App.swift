@@ -77,6 +77,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var transcriptSizes: [String: UInt64] = [:]
     private var connection = Connection.State.disconnected
     private var lastConnectionCheck = 0.0
+    private var lastUpdateCheck = 0.0
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         if let id = Bundle.main.bundleIdentifier,
@@ -90,6 +91,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             askToMoveToApplications()
             return
         }
+        Updates.listenIfNoticePending()
+        lastUpdateCheck = Date().timeIntervalSince1970 - 3600 + 30   // the first update check half a minute after launch
         board.onClick = { [weak self] record in self?.reveal(record) }
         board.onMenu = { [weak self] event, view in
             guard let self else { return }
@@ -212,6 +215,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if now - lastConnectionCheck >= 10 {
             lastConnectionCheck = now
             connection = Connection.state()
+        }
+        if now - lastUpdateCheck >= 3600 {
+            lastUpdateCheck = now
+            Updates.checkDaily()
         }
         list.sort { ($0.started, $0.sessionId) < ($1.started, $1.sessionId) }
         sessions = list
