@@ -10,11 +10,11 @@ enum Lang {
     private(set) static var bundle = Bundle.main
     private(set) static var code: String?
 
+    /// The language the menus are shown in.
+    static var active: String { code ?? Bundle.main.preferredLocalizations.first ?? "en" }
+
     /// Right-to-left languages (Arabic) mirror the board.
-    static var rtl: Bool {
-        let active = code ?? Bundle.main.preferredLocalizations.first ?? "en"
-        return NSLocale.characterDirection(forLanguage: active) == .rightToLeft
-    }
+    static var rtl: Bool { NSLocale.characterDirection(forLanguage: active) == .rightToLeft }
 
     #if DEVTOOLS
     static func use(lprojAt path: String) {

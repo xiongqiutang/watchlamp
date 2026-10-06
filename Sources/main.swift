@@ -6,6 +6,8 @@ func argument(_ index: Int, _ fallback: String) -> String { arguments.count > in
 switch arguments.first {
 case "hook":
     exit(Hook.run())
+case "play-sound":
+    exit(Player.run(argument(1, ""), volume: Double(argument(2, "1")) ?? 1))
 case "connect", "disconnect":
     // Used by install.sh / uninstall.sh; the app does the same from its menu.
     Lang.use(UserDefaults.standard.string(forKey: "language"))
@@ -25,14 +27,23 @@ case "demo":
     Lang.use(UserDefaults.standard.string(forKey: "language"))
     Tools.demo(seconds: Double(argument(1, "12")) ?? 12)
 #if DEVTOOLS
+case "form":   // form review|suggestion: one of the menu's windows on its own, for checking its layout
+    MainActor.assumeIsolated {
+        let app = NSApplication.shared
+        app.setActivationPolicy(.accessory)
+        if arguments.count > 2 { Lang.use(lprojAt: "Resources/\(arguments[2]).lproj") }
+        let kind: FormWindow.Kind = argument(1, "review") == "review" ? .review : .suggestion
+        FormWindow.show(kind)
+        if arguments.contains("--send") { FormWindow.sendTest(kind) }
+        app.run()
+    }
 case "status":
     Tools.printStatus()
 case "snapshot":
     if arguments.count > 5 { Lang.use(lprojAt: "Resources/\(arguments[5]).lproj") }
     MainActor.assumeIsolated {
         Tools.snapshot(to: argument(1, "snapshot.png"), vertical: argument(2, "h") == "v",
-                       size: Double(argument(3, "110")) ?? 110, paletteID: argument(4, "classic"),
-                       textScale: Double(argument(6, "1")) ?? 1)
+                       size: Double(argument(3, "110")) ?? 110, paletteID: argument(4, "classic"))
     }
 #endif
 default:

@@ -13,53 +13,67 @@ struct LampItem {
     var dark = false
 }
 
-/// Layout numbers derived from the lamp diameter. Rects use bottom-left-origin layer coordinates.
+/// Layout numbers. Rects use bottom-left-origin layer coordinates.
+///
+/// Every length is a fixed multiple of one of two units, so the board keeps the same proportions at every
+/// lamp size: d, the lamp diameter, for what surrounds the lamp (its glow), and u, the text unit, for what
+/// surrounds the text. u is the status text size of the horizontal layout; like all text it has a floor
+/// so it stays readable next to small lamps.
 struct Metrics {
     let d: CGFloat
     let vertical: Bool
     let showDetail: Bool
     var rtl = false
-    var textScale: CGFloat = 1
+    var maxWidth = CGFloat.greatestFiniteMagnitude   // the screen's width: rows wrap rather than run off it
 
-    var pad: CGFloat { max(12, d * 0.2) }   // the glow past this is faint, and clipped by the board's rounded edge
-    var topPad: CGFloat { pad + d * 0.08 }   // a little more above the lamps, where the glow rises
+    var u: CGFloat { max(11, d * 0.135) }
+    var sideMargin: CGFloat { u * 1.25 }     // board edge to the text column
+    var bottomMargin: CGFloat { u * 1.35 }   // below the last line of text
+    var glowRoom: CGFloat { d * 0.2 }        // added where a lamp's glow meets the board edge
+    var topPad: CGFloat { sideMargin + glowRoom }
+    var bottomPad: CGFloat { vertical ? topPad : bottomMargin }
+    var leftPad: CGFloat { vertical && !rtl ? topPad : sideMargin }
+    var rightPad: CGFloat { vertical && rtl ? topPad : sideMargin }
     var bezel: CGFloat { max(2, d * 0.075) }
-    var lampGap: CGFloat { max(8, d * 0.14) }
-    var lineGap: CGFloat { max(3, d * 0.045) }
-    var nameSize: CGFloat { max(13, d * (vertical ? 0.22 : 0.18)) * textScale }
-    var statusSize: CGFloat { max(11, d * (vertical ? 0.16 : 0.135)) * textScale }
-    // The detail line is read up close, so it grows half as fast as the name and status.
-    var detailSize: CGFloat { max(10, d * (vertical ? 0.125 : 0.11)) * (1 + (textScale - 1) * 0.5) }
+    var lampGap: CGFloat { d * 0.07 + u * 0.5 }   // clears the glow below the lamp, and the text
+    var lineGap: CGFloat { u / 3 }
+    var nameSize: CGFloat { max(13, d * (vertical ? 0.22 : 0.18)) }
+    var statusSize: CGFloat { max(11, d * (vertical ? 0.16 : 0.135)) }
+    var detailSize: CGFloat { max(10, d * (vertical ? 0.125 : 0.11)) }
     var nameLine: CGFloat { ceil(nameSize * 1.3) }
     var pillHeight: CGFloat { ceil(statusSize * 1.85) }
     var pillPadding: CGFloat { statusSize * 0.75 }
     var detailLine: CGFloat { ceil(detailSize * 1.4) }
     var textHeight: CGFloat { nameLine + lineGap + pillHeight + (showDetail ? lineGap + detailLine : 0) }
-    // Sized for the lamp, name and status; the detail line truncates. Larger text widens it a little.
-    var textWidth: CGFloat {
-        (vertical ? max(170, d * 2.1) : max(120, d * 1.45)) * (1 + max(0, textScale - 1) * 0.6)
-    }
+    // Horizontal: fits the longest status ("Wartet auf dich 03:42", 9.7 em) in every language; the detail line
+    // truncates. Vertical: as wide as the text needs (see BoardView.textFit), up to a limit.
+    var textFit: CGFloat?
+    var textWidth: CGFloat { vertical ? min(textFit ?? .greatestFiniteMagnitude, u * 15.5) : u * 10.75 }
     var cellWidth: CGFloat { vertical ? d + lampGap * 1.4 + textWidth : textWidth }
     var cellHeight: CGFloat { vertical ? max(d, textHeight) : d + lampGap + textHeight }
-    var columnSpacing: CGFloat { max(6, d * 0.12) }
-    var rowSpacing: CGFloat { max(8, d * 0.2) }
-    var cornerRadius: CGFloat { min(28, max(12, d * 0.18)) }
+    var columnSpacing: CGFloat { u * 0.9 }
+    var rowSpacing: CGFloat { u * 1.48 }
+    var cornerRadius: CGFloat { u * 1.33 }
 
-    /// A row holds at most four lamps; more sessions wrap onto new rows.
-    func columns(_ count: Int) -> Int { vertical ? 1 : min(max(1, count), 4) }
+    /// A row holds at most four lamps, and only as many as fit on the screen; more sessions wrap onto new rows.
+    func columns(_ count: Int) -> Int {
+        guard !vertical else { return 1 }
+        let fitting = Int((maxWidth - leftPad - rightPad + columnSpacing) / (cellWidth + columnSpacing))
+        return min(max(1, count), 4, max(1, fitting))
+    }
     func rows(_ count: Int) -> Int { (max(1, count) + columns(count) - 1) / columns(count) }
 
     func boardSize(count: Int) -> NSSize {
         let c = CGFloat(columns(count)), r = CGFloat(rows(count))
-        return NSSize(width: pad * 2 + c * cellWidth + (c - 1) * columnSpacing,
-                      height: topPad + pad + r * cellHeight + (r - 1) * rowSpacing)
+        return NSSize(width: leftPad + rightPad + c * cellWidth + (c - 1) * columnSpacing,
+                      height: topPad + bottomPad + r * cellHeight + (r - 1) * rowSpacing)
     }
 
     func cellRect(_ index: Int, count: Int, board: NSSize) -> CGRect {
         let c = columns(count)
         let column = CGFloat(rtl ? c - 1 - index % c : index % c), row = CGFloat(index / c)
         let top = topPad + row * (cellHeight + rowSpacing)
-        return CGRect(x: pad + column * (cellWidth + columnSpacing), y: board.height - top - cellHeight,
+        return CGRect(x: leftPad + column * (cellWidth + columnSpacing), y: board.height - top - cellHeight,
                       width: cellWidth, height: cellHeight)
     }
 }
@@ -336,6 +350,8 @@ final class BoardView: NSView {
     private var frames: [CGRect] = []
     private var items: [LampItem] = []
     private var structureKey = ""
+    private var fitKey = ""
+    private var fitWidth: CGFloat = 0
     private var tooltipKey = ""
     private var tooltipOwners: [NSString] = []
     private var mouseDownEvent: NSEvent?
@@ -359,14 +375,26 @@ final class BoardView: NSView {
 
     func update(_ newItems: [LampItem], look: Look, scale: CGFloat? = nil) {
         guard let root = layer else { return }
-        let m = Metrics(d: CGFloat(look.size), vertical: look.vertical, showDetail: look.showDetail, rtl: look.rtl,
-                        textScale: CGFloat(look.textScale))
+        let screen = window?.screen ?? NSScreen.main
+        var m = Metrics(d: CGFloat(look.size), vertical: look.vertical, showDetail: look.showDetail, rtl: look.rtl,
+                        maxWidth: screen?.visibleFrame.width ?? .greatestFiniteMagnitude)
+        if m.vertical {
+            // Measuring text is the costly part of a refresh; redo it only when what it measures changes.
+            let key = "\(m.d)|\(m.showDetail)|\(Lang.code ?? "")|" + newItems.map {
+                "\($0.label)\u{1}\($0.status.count)\u{1}\($0.record == nil ? $0.detail : "")"
+            }.joined(separator: "\u{2}")
+            if key != fitKey {
+                fitKey = key
+                fitWidth = Self.textFit(newItems, m)
+            }
+            m.textFit = fitWidth
+        }
         let size = m.boardSize(count: newItems.count)
-        let scale = scale ?? window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 2
+        let scale = scale ?? window?.backingScaleFactor ?? screen?.backingScaleFactor ?? 2
 
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        let key = "\(newItems.count)|\(m.d)|\(m.vertical)|\(m.showDetail)|\(m.rtl)|\(m.textScale)"
+        let key = "\(newItems.count)|\(m.columns(newItems.count))|\(m.d)|\(m.vertical)|\(m.showDetail)|\(m.rtl)|\(m.textWidth)"
         if key != structureKey {
             structureKey = key
             cells.forEach { $0.remove() }
@@ -386,6 +414,24 @@ final class BoardView: NSView {
         updateTooltips()
     }
 
+    /// The vertical layout's text column ends where its text does, so the right margin matches the others.
+    /// It fits the lines that stay put: the names, every status, a finished turn's summary, and the hint shown
+    /// when there are no sessions. What a session is doing changes with every step; that line truncates
+    /// rather than resizing the board.
+    private static func textFit(_ items: [LampItem], _ m: Metrics) -> CGFloat {
+        func width(_ text: String, _ font: NSFont) -> CGFloat { ceil((text as NSString).size(withAttributes: [.font: font]).width) }
+        let statusFont = Fonts.rounded(m.statusSize, .semibold, monospacedDigits: true)
+        let statuses = [L("Running %@", Format.clock(0)), L("Waiting for you %@", Format.clock(0)), L("Your turn"), L("Idle"),
+                        Format.phrase("@interrupted"), Format.phrase("@failed")] + items.map(\.status)
+        let nameFont = Fonts.rounded(m.nameSize, .bold)
+        let detailFont = NSFont.systemFont(ofSize: m.detailSize)
+        let summary = L("Finished %@", L("%ld min ago", 59)) + " · " + L("Took %@", Format.clock(3599))
+        let lines = [summary] + items.filter { $0.record == nil }.map(\.detail)
+        return max(statuses.map { width($0, statusFont) + 2 + m.pillPadding * 2 }.max() ?? 0,
+                   items.map { width($0.label, nameFont) + 6 }.max() ?? 0,
+                   m.showDetail ? lines.map { width($0, detailFont) + 4 }.max() ?? 0 : 0)
+    }
+
     private func updateTooltips() {
         let key = items.map(\.tooltip).joined(separator: "\u{1}") + structureKey
         guard key != tooltipKey else { return }
@@ -399,6 +445,7 @@ final class BoardView: NSView {
     override func mouseDown(with event: NSEvent) {
         mouseDownEvent = event
         dragged = false
+        window?.orderFrontRegardless()   // when it isn't kept on top, a click brings it forward
     }
 
     override func mouseDragged(with event: NSEvent) {
@@ -430,8 +477,7 @@ final class LightPanel: NSPanel {
         super.init(contentRect: NSRect(x: 0, y: 0, width: 200, height: 200),
                    styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         contentView = content
-        isFloatingPanel = true
-        level = .statusBar
+        keepOnTop(true)
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
         isOpaque = false
         backgroundColor = .clear
@@ -443,4 +489,10 @@ final class LightPanel: NSPanel {
 
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
+
+    /// On top: above every window, full-screen apps included. Otherwise an ordinary window that others can cover.
+    func keepOnTop(_ onTop: Bool) {
+        isFloatingPanel = onTop
+        level = onTop ? .statusBar : .normal
+    }
 }

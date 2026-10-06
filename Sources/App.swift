@@ -18,12 +18,55 @@ final class ActionItem: NSMenuItem {
     @MainActor @objc private func fire() { handler() }
 }
 
+/// The Sound menu's volume slider: 10% to 400% on a decibel scale, so 100% sits near the middle.
+final class VolumeItem: NSMenuItem {
+    private let slider = NSSlider()
+    private let value = NSTextField(labelWithString: "")
+    private let handler: @MainActor (Double, Bool) -> Void   // the gain, and whether the drag has ended
+
+    init(_ title: String, gain: Double, rtl: Bool, handler: @escaping @MainActor (Double, Bool) -> Void) {
+        self.handler = handler
+        super.init(title: title, action: nil, keyEquivalent: "")
+        let view = NSView(frame: NSRect(x: 0, y: 0, width: 260, height: 50))
+        let caption = NSTextField(labelWithString: title)
+        caption.font = .menuFont(ofSize: 0)
+        value.font = .monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
+        value.textColor = .secondaryLabelColor
+        caption.frame = NSRect(x: rtl ? 96 : 20, y: 27, width: 144, height: 17)
+        value.frame = NSRect(x: rtl ? 20 : 166, y: 27, width: 74, height: 17)
+        caption.alignment = rtl ? .right : .left
+        value.alignment = rtl ? .left : .right
+        slider.frame = NSRect(x: 18, y: 4, width: 224, height: 21)
+        slider.minValue = -20
+        slider.maxValue = 20 * log10(4)
+        slider.numberOfTickMarks = 9
+        slider.doubleValue = 20 * log10(min(max(gain, 0.1), 4))
+        slider.userInterfaceLayoutDirection = rtl ? .rightToLeft : .leftToRight
+        slider.target = self
+        slider.action = #selector(slid)
+        [caption, value, slider].forEach(view.addSubview)
+        self.view = view
+        show()
+    }
+
+    required init(coder: NSCoder) { fatalError("init(coder:) is not used") }
+
+    private var gain: Double { pow(10, slider.doubleValue / 20) }
+    private func show() { value.stringValue = "\(Int((gain * 20).rounded()) * 5)%" }
+
+    @MainActor @objc private func slid() {
+        show()
+        handler(gain, NSApp.currentEvent?.type == .leftMouseUp)
+    }
+}
+
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let prefs = Prefs.shared
     private let board = BoardView(frame: NSRect(x: 0, y: 0, width: 200, height: 200))
     private lazy var panel = LightPanel(content: board)
     private let edge = EdgeGlow()
+    private let chime = Chime()
     private var statusItem: NSStatusItem?
     private var timer: Timer?
     private var sessions: [SessionRecord] = []
@@ -63,6 +106,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                                name: NSApplication.didChangeScreenParametersNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(panelMoved),
                                                name: NSWindow.didMoveNotification, object: panel)
+        panel.keepOnTop(prefs.alwaysOnTop)
         refresh()
         restorePosition()
         timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
@@ -171,6 +215,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         list.sort { ($0.started, $0.sessionId) < ($1.started, $1.sessionId) }
         sessions = list
+        chime.update(list, now: now, prefs: prefs)
 
         board.update(items(now: now), look: prefs.look)
         fitPanel()
@@ -327,6 +372,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let size = panel.frame.size
         panel.setFrameOrigin(NSPoint(x: visible.maxX - size.width - 24, y: visible.maxY - size.height - 24))
         prefs.origin = panel.frame.origin
+        if panel.isVisible { panel.orderFrontRegardless() }   // out from behind other windows
     }
 
     @objc private func panelMoved() {
@@ -417,9 +463,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(submenu(L("Lamp size"), Prefs.sizes.map { title, value in
             ActionItem(L(title), checked: prefs.size == value) { [weak self] in self?.change { $0.size = value } }
         }))
-        menu.addItem(submenu(L("Text size"), Prefs.textSizes.map { title, value in
-            ActionItem(L(title), checked: prefs.textScale == value) { [weak self] in self?.change { $0.textScale = value } }
-        }))
         menu.addItem(submenu(L("Layout"), [
             ActionItem(L("Horizontal"), checked: !prefs.vertical) { [weak self] in self?.change { $0.vertical = false } },
             ActionItem(L("Vertical"), checked: prefs.vertical) { [weak self] in self?.change { $0.vertical = true } },
@@ -437,11 +480,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(submenu(L("Screen edge glow"), Prefs.edgeModes.enumerated().map { index, title in
             ActionItem(L(title), checked: prefs.edgeMode == index) { [weak self] in self?.change { $0.edgeMode = index } }
         }))
+        menu.addItem(submenu(L("Sound"), Prefs.soundModes.enumerated().map { index, title in
+            ActionItem(L(title), checked: prefs.soundMode == index) { [weak self] in self?.change { $0.soundMode = index } }
+        } + [.separator(), volumeItem(), .separator(),
+             submenu(L("Sound when waiting for you"), soundChoices(\.waitingSound)),
+             submenu(L("Sound when done"), soundChoices(\.doneSound))]))
         menu.addItem(submenu(L("Move board to"), NSScreen.screens.enumerated().map { index, screen in
             ActionItem(index == 0 ? L("%@ (main)", screen.localizedName) : screen.localizedName) { [weak self] in
                 self?.move(to: screen)
             }
         }))
+        menu.addItem(ActionItem(L("Always on top"), checked: prefs.alwaysOnTop) { [weak self] in
+            guard let self else { return }
+            prefs.alwaysOnTop.toggle()
+            panel.keepOnTop(prefs.alwaysOnTop)
+            if panel.isVisible { panel.orderFrontRegardless() }
+        })
         menu.addItem(ActionItem(L("Hide board when there are no sessions"), checked: prefs.hideWhenEmpty) { [weak self] in
             self?.change { $0.hideWhenEmpty.toggle() }
         })
@@ -461,7 +515,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             self?.toggleLogin()
         })
         menu.addItem(.separator())
+
+        menu.addItem(ActionItem(L("Check for Updates…")) { Updates.check() })
+        menu.addItem(ActionItem(L("Rate Watchlamp…")) { FormWindow.show(.review) })
+        menu.addItem(ActionItem(L("Send a Suggestion…")) { FormWindow.show(.suggestion) })
+        menu.addItem(ActionItem(L("Leave a Tip…")) { Website.tip() })
+        menu.addItem(.separator())
         menu.addItem(ActionItem(L("Quit Watchlamp")) { NSApp.terminate(nil) })
+    }
+
+    /// Picking a sound plays it.
+    private func soundChoices(_ setting: ReferenceWritableKeyPath<Prefs, String>) -> [NSMenuItem] {
+        Chime.available.map { name in
+            ActionItem(name, checked: prefs[keyPath: setting] == name) { [weak self] in
+                guard let self else { return }
+                prefs[keyPath: setting] = name
+                Chime.play(name, volume: prefs.soundVolume)
+            }
+        }
+    }
+
+    /// Letting go of the slider plays the "waiting for you" sound at the new volume.
+    private func volumeItem() -> NSMenuItem {
+        let item = VolumeItem(L("Volume"), gain: prefs.soundVolume, rtl: Lang.rtl) { [weak self] gain, released in
+            guard let self else { return }
+            prefs.soundVolume = gain
+            if released { Chime.play(prefs.waitingSound, volume: gain) }
+        }
+        item.toolTip = L("Above 100%, alerts play louder than other apps at the same system volume.")
+        return item
     }
 
     private func submenu(_ title: String, _ items: [NSMenuItem]) -> NSMenuItem {

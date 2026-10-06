@@ -75,11 +75,11 @@ extension Tools {
 
     /// Renders the board offscreen to a PNG, for checking layouts without screen recording.
     @MainActor
-    static func snapshot(to path: String, vertical: Bool, size: Double, paletteID: String, textScale: Double = 1) {
+    static func snapshot(to path: String, vertical: Bool, size: Double, paletteID: String) {
         _ = NSApplication.shared
         let now = Date().timeIntervalSince1970
         let look = Look(size: size, vertical: vertical, showDetail: true,
-                        palette: Palette.all.first { $0.id == paletteID } ?? Palette.all[0], rtl: Lang.rtl, textScale: textScale)
+                        palette: Palette.all.first { $0.id == paletteID } ?? Palette.all[0], rtl: Lang.rtl)
         let only = ProcessInfo.processInfo.environment["SAMPLES"].map { Set($0.compactMap { $0.wholeNumberValue }) }
         let samples = sampleRecords(now: now, pid: nil).enumerated().filter { only?.contains($0.offset + 1) ?? true }.map(\.element)
         let items = samples.map { r in
@@ -97,8 +97,10 @@ extension Tools {
                                          hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB,
                                          bytesPerRow: 0, bitsPerPixel: 0),
               let context = NSGraphicsContext(bitmapImageRep: rep)?.cgContext else { return }
-        context.setFillColor(NSColor(white: 0.3, alpha: 1).cgColor)
-        context.fill(CGRect(x: 0, y: 0, width: box.width * scale, height: box.height * scale))
+        if ProcessInfo.processInfo.environment["SNAPSHOT_CLEAR"] == nil {   // a transparent PNG for web pages
+            context.setFillColor(NSColor(white: 0.3, alpha: 1).cgColor)
+            context.fill(CGRect(x: 0, y: 0, width: box.width * scale, height: box.height * scale))
+        }
         context.scaleBy(x: scale, y: scale)
         board.layer?.render(in: context)
         try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path))

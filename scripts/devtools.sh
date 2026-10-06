@@ -1,6 +1,6 @@
 #!/bin/bash
 # Developer build with the commands that are not shipped in the app:
-#   scripts/devtools.sh snapshot out.png [h|v] [size] [palette] [lang] [text scale]   render the board to a PNG
+#   scripts/devtools.sh snapshot out.png [h|v] [size] [palette] [lang]   render the board to a PNG (SNAPSHOT_CLEAR=1: transparent)
 #   scripts/devtools.sh demo [seconds]                              put three sample lamps on the live board
 #   scripts/devtools.sh status                                      list the recorded sessions
 set -euo pipefail

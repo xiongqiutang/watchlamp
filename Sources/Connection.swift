@@ -44,9 +44,20 @@ enum Connection {
         return "'" + path.replacingOccurrences(of: "'", with: "'\\''") + "' hook 2>/dev/null || true"
     }
 
+    private static var checked: (stamp: String, state: State)?
+
     /// `.elsewhere`: hooked up, but to another copy of the app (it was moved).
+    /// The app asks every few seconds; the file is parsed again only when it changed.
     static func state() -> State {
         guard FileManager.default.fileExists(atPath: claudeDir.path) else { return .noClaude }
+        let stamp = Transcript.stat(settingsURL.path).map { "\($0.modified)|\($0.size)" } ?? "none"
+        if let checked, checked.stamp == stamp { return checked.state }
+        let state = parse()
+        checked = (stamp, state)
+        return state
+    }
+
+    private static func parse() -> State {
         guard let data = try? Data(contentsOf: settingsURL),
               let settings = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
               let hooks = settings["hooks"] as? [String: Any] else { return .disconnected }

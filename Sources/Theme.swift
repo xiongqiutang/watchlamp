@@ -42,7 +42,6 @@ struct Look {
     var showDetail: Bool
     var palette: Palette
     var rtl = false
-    var textScale: Double = 1
 }
 
 @MainActor
@@ -50,18 +49,15 @@ final class Prefs {
     static let shared = Prefs()
     private let defaults = UserDefaults.standard
 
-    static let sizes: [(String, Double)] = [("Small", 56), ("Medium", 80), ("Large", 110), ("X-Large", 160), ("Huge", 240)]
-    static let textSizes: [(String, Double)] = [("Small", 0.8), ("Medium", 1), ("Large", 1.25), ("X-Large", 1.5)]
+    static let sizes: [(String, Double)] = [
+        ("Small", 56), ("Medium", 80), ("Large", 110), ("X-Large", 160), ("Huge", 240), ("Maximum", 360),
+    ]
     static let edgeModes = ["Off", "Only when waiting for you", "While working or waiting"]
+    static let soundModes = ["Off", "Only when waiting for you", "When waiting for you or done"]
 
     var size: Double {
         get { defaults.object(forKey: "lampSize") as? Double ?? 110 }
         set { defaults.set(newValue, forKey: "lampSize") }
-    }
-    /// Multiplies the board's text, independent of the lamp size.
-    var textScale: Double {
-        get { defaults.object(forKey: "textScale") as? Double ?? 1 }
-        set { defaults.set(newValue, forKey: "textScale") }
     }
     var vertical: Bool {
         get { defaults.bool(forKey: "vertical") }
@@ -76,10 +72,32 @@ final class Prefs {
         get { defaults.object(forKey: "edgeMode") as? Int ?? 1 }
         set { defaults.set(newValue, forKey: "edgeMode") }
     }
+    /// 0 off, 1 when a session starts waiting for you, 2 also when a session is done.
+    var soundMode: Int {
+        get { defaults.object(forKey: "soundMode") as? Int ?? 2 }
+        set { defaults.set(newValue, forKey: "soundMode") }
+    }
+    var waitingSound: String {
+        get { defaults.string(forKey: "waitingSound") ?? "Submarine" }
+        set { defaults.set(newValue, forKey: "waitingSound") }
+    }
+    var doneSound: String {
+        get { defaults.string(forKey: "doneSound") ?? "Glass" }
+        set { defaults.set(newValue, forKey: "doneSound") }
+    }
+    /// A gain from 0.1 to 4: past 1 the alerts play louder than other apps at the same system volume.
+    var soundVolume: Double {
+        get { defaults.object(forKey: "soundVolume") as? Double ?? 1 }
+        set { defaults.set(newValue, forKey: "soundVolume") }
+    }
     /// Set once the first-launch "connect to Claude Code?" question has been asked.
     var askedToConnect: Bool {
         get { defaults.bool(forKey: "askedToConnect") }
         set { defaults.set(newValue, forKey: "askedToConnect") }
+    }
+    var alwaysOnTop: Bool {
+        get { defaults.object(forKey: "alwaysOnTop") as? Bool ?? true }
+        set { defaults.set(newValue, forKey: "alwaysOnTop") }
     }
     var hideWhenEmpty: Bool {
         get { defaults.bool(forKey: "hideWhenEmpty") }
@@ -96,7 +114,7 @@ final class Prefs {
     }
     var palette: Palette { Palette.all.first { $0.id == paletteID } ?? Palette.all[0] }
     var look: Look {
-        Look(size: size, vertical: vertical, showDetail: showDetail, palette: palette, rtl: Lang.rtl, textScale: textScale)
+        Look(size: size, vertical: vertical, showDetail: showDetail, palette: palette, rtl: Lang.rtl)
     }
     var origin: NSPoint? {
         get {
@@ -189,9 +207,21 @@ enum Format {
     }
 }
 
+@MainActor
 enum Fonts {
+    private static var cache: [String: NSFont] = [:]
+
     /// SF Pro Rounded (Chinese falls back to PingFang), optionally with fixed-width digits so timers don't jiggle.
+    /// Each size is built once: assembling a font from descriptors churns far more memory than looking it up.
     static func rounded(_ size: CGFloat, _ weight: NSFont.Weight, monospacedDigits: Bool = false) -> NSFont {
+        let key = "\(size)|\(weight.rawValue)|\(monospacedDigits)"
+        if let hit = cache[key] { return hit }
+        let font = make(size, weight, monospacedDigits)
+        cache[key] = font
+        return font
+    }
+
+    private static func make(_ size: CGFloat, _ weight: NSFont.Weight, _ monospacedDigits: Bool) -> NSFont {
         var descriptor = NSFont.systemFont(ofSize: size, weight: weight).fontDescriptor
         if let rounded = descriptor.withDesign(.rounded) { descriptor = rounded }
         if monospacedDigits {
