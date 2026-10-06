@@ -1,117 +1,147 @@
 # Watchlamp
 
+English | [简体中文](README.zh-CN.md)
+
 *A status light for Claude Code on macOS: one lamp per session, readable from across the room.*
 
-适用于 Claude Code 的醒目提醒灯：在 Mac 屏幕上放一块悬浮灯板，每个 Claude Code 会话一盏灯，
-哪个项目在跑、哪个在等你，隔着半个房间也看得清。桌面版（Code 标签页）和终端里的 `claude` 都支持。
+Watchlamp puts a floating board on your Mac's screen with one lamp for each Claude Code session, so you can tell which
+project is running and which one is waiting for you from across the room. It works with the Claude desktop app (the
+Code tab) and with `claude` in the terminal.
 
-![灯板截图：运行中、等你操作、已完成三种状态](screenshot.png)
+![The board with three sessions: running, waiting for you, and done](screenshot.png)
 
-| 灯（默认"经典"配色） | 含义 | 下面的文字 |
+| Lamp (default "Classic" colors) | Meaning | Text under the lamp |
 |---|---|---|
-| 🟢 绿色，光晕呼吸，灯圈上有一道光在转 | 运行中 | 本轮已运行多久、正在做什么（如"命令 · 运行测试"） |
-| 🔴 红色 + ✋，快速闪烁 | 等你操作：授权确认、回答问题、确认计划；出错停下时显示 ❗ | 等了多久、等的是什么 |
-| ⚫ 熄灭 + ✓ | 空闲：这一轮做完了 | 多久前完成、用时多少 |
+| 🟢 Green, with a breathing glow and a light circling the rim | Running | How long the turn has been running and what Claude is doing (e.g. "Command · Run the tests") |
+| 🔴 Red with ✋, blinking fast | Waiting for you: a permission prompt, a question or a plan to approve; ❗ when it stopped on an error | How long it has been waiting, and for what |
+| ⚫ Off with ✓ | Idle: the turn is done | How long ago it finished and how long it took |
 
-另外可以让**屏幕边框发光**（所有屏幕一起亮，鼠标可以直接穿过去点）。默认只在"等你操作"时闪框，也可以改成运行中也亮。
+The **edges of every screen can glow** too (all displays at once, and clicks go right through). By default they flash
+only while a session is waiting for you; you can also have them light up while Claude works.
 
-还会**响一声提醒**：等你操作时一种声音，一轮做完时另一种。两秒内就点掉的授权不会响，自己按 Esc 中断的也不会响。
+It also **plays a sound**: one when Claude needs you, another when a turn is done. A permission prompt you answer within
+two seconds stays quiet, and so does a turn you interrupt yourself with Esc.
 
-界面支持 12 种语言：English、Español、Português (Brasil)、Français、Deutsch、Italiano、Русский、العربية、日本語、한국어、简体中文、繁體中文。默认跟随系统语言，也可以在菜单"语言"里单独切换；阿拉伯语下灯板会左右镜像。
+The interface comes in 12 languages: English, Español, Português (Brasil), Français, Deutsch, Italiano, Русский,
+العربية, 日本語, 한국어, 简体中文 and 繁體中文. It follows your Mac's language, or you can pick one under Language in the
+menu; in Arabic the board is mirrored.
 
-## 使用
+## Using it
 
-- **移动**：直接拖灯板，放在主屏或扩展屏都行，位置会记住。也可以用菜单"把灯板移到"一键放到某块屏幕。
-- **点一下灯**：切换到这个会话所在的 app（Claude 桌面版、终端、VS Code……）。
-- **右键灯板**或点**菜单栏的小圆点**打开设置：
-  - 灯的大小：小 / 中 / 大 / 特大 / 巨大 / 最大（离得远就选大一点）
-  - 横排 / 竖排（横排一行最多 4 盏，多了自动换行）
-  - 配色：经典（运行绿、等你红）、轮到你（干活红、点一下黄、轮到你绿，站在你的角度看）、色弱友好（运行蓝、等你橙）
-  - 显示正在做什么、屏幕边框发光、没有会话时隐藏、登录时自动启动
-  - 总在最前（默认开，全屏 App 上也看得到）；关掉后灯板像普通窗口一样会被别的窗口挡住，点一下回到前面
-  - 音效：等你操作和完成时都响（默认）、只在等你操作时响、关闭；两种声音都能换成系统提示音或 `~/Library/Sounds` 里的声音；
-    音量 10%–400%，超过 100% 时比同样系统音量下其他应用的提示音更响
-  - 演示三种状态（12 秒，在灯板上放三盏示例灯）、语言
-  - 检查更新；评价、提建议（在 App 里直接提交，评价经审核后显示在 [Watchlamp 的网页](https://thermport.com/zh/watchlamp/) 上）；
-    打赏（在浏览器里打开 Lemon Squeezy 的结账页）
-- 同一个项目开了多个会话时，会显示成"项目名 #1""项目名 #2"。鼠标停在灯上能看到完整路径。
+- **Move it**: drag the board anywhere, on your main display or another one; it remembers where you put it. **Move
+  board to** in the menu sends it to a particular display in one click.
+- **Click a lamp** to switch to the app that session runs in (the Claude desktop app, Terminal, VS Code…).
+- **Right-click the board**, or click the **small dot in the menu bar**, for the settings:
+  - Lamp size: Small / Medium / Large / X-Large / Huge / Maximum (pick a bigger one if you sit farther away)
+  - Layout: Horizontal / Vertical (a horizontal board wraps after 4 lamps in a row)
+  - Colors: Classic (working green, waiting red), Your turn (working red, click-me yellow, your turn green, as seen
+    from your side of the desk), Color-blind friendly (working blue, waiting orange)
+  - Show what it's doing, Screen edge glow, Hide board when there are no sessions, Launch at login
+  - Always on top (on by default, and visible over full-screen apps); turned off, the board behaves like an ordinary
+    window that other windows can cover, and a click brings it back to the front
+  - Sound: when Claude needs you and when a turn is done (the default), only when Claude needs you, or off. Either
+    sound can be any macOS alert sound or one of your own in `~/Library/Sounds`. Volume goes from 10% to 400%: above
+    100%, alerts play louder than other apps' sounds at the same system volume
+  - Demo the three states (12 s, with three sample lamps on the board), Language
+  - Check for Updates…; Rate Watchlamp… and Send a Suggestion… (sent from inside the app; approved reviews appear on
+    [Watchlamp's page](https://thermport.com/watchlamp/)); Leave a Tip… (opens the Lemon Squeezy checkout in your browser)
+- Several sessions in the same project show up as "project #1", "project #2". Hover over a lamp to see its full path.
 
-> 小提示：MacBook 菜单栏图标太多时，macOS 会把放不下的图标藏到刘海后面。菜单栏里看不到小圆点时，右键灯板打开的是同一个菜单。
+> Tip: when a MacBook's menu bar is crowded, macOS hides the icons that don't fit behind the notch. If you can't see the
+> dot in the menu bar, right-click the board: it opens the same menu.
 
-## 安装
+## Install
 
-1. 从 [thermport.com/watchlamp](https://thermport.com/zh/watchlamp/) 下载 dmg 安装包，双击打开。
-2. 把 Watchlamp 拖进"应用程序"文件夹，再从"应用程序"里打开它。
-3. 第一次打开会问要不要连接 Claude Code，点"连接 Claude Code"（"登录时自动启动"默认已勾上）。
+1. Download the disk image from [thermport.com/watchlamp](https://thermport.com/watchlamp/) and open it.
+2. Drag Watchlamp into the Applications folder, then open it from there.
+3. The first time, it asks whether to connect to Claude Code: click **Connect to Claude Code** ("Launch at login" is
+   already ticked).
 
-需要 macOS 13 或更新版本，Apple 芯片和 Intel 芯片的 Mac 都能用。安装包已签名并经过苹果公证，打开时不会被拦截。
-还没装 Claude Code 也没关系：装好以后在菜单里点"连接 Claude Code"。
+Requires macOS 13 or later, on Apple silicon or Intel. The app is signed with a Developer ID and notarized by Apple, so
+it opens without warnings. Haven't installed Claude Code yet? That's fine: once you have, choose **Connect to Claude
+Code** from the menu.
 
-- **连接做了什么**：在 `~/.claude/settings.json` 里加上 Watchlamp 的钩子。改之前会把原文件备份到
-  `~/.claude/watchlamp/backups/`，只增删命令里带 `Watchlamp` 的钩子，其他设置原样保留。
-- **更新**：先退出 Watchlamp，把新版拖进"应用程序"替换旧版，再打开。
-- **卸载**：菜单里点"断开 Claude Code"，退出 Watchlamp，把它拖到废纸篓。
-  直接删掉也没关系，留下的钩子找不到 App 时什么都不做；想清干净的话再删掉 `~/.claude/watchlamp`。
+- **What connecting does**: it adds Watchlamp's hooks to `~/.claude/settings.json`. The original file is backed up to
+  `~/.claude/watchlamp/backups/` first, and only hooks whose command contains `Watchlamp` are added or removed;
+  everything else stays as it was.
+- **Updating**: quit Watchlamp, drag the new version into Applications to replace the old one, and open it.
+- **Uninstalling**: choose **Disconnect from Claude Code** in the menu, quit Watchlamp, and drag it to the Trash.
+  Deleting it without disconnecting is fine too: the hooks left behind do nothing when they can't find the app. To
+  remove every trace, also delete `~/.claude/watchlamp`.
 
-### 从源码安装
+### Install from source
 
-需要 Xcode 或 Command Line Tools（`swiftc`）：
+Requires Xcode or the Command Line Tools (`swiftc`):
 
 ```bash
 git clone https://github.com/xiongqiutang/watchlamp.git
 cd watchlamp
-./install.sh     # 编译 → 装到 ~/Applications/Watchlamp.app → 连接 Claude Code → 启动
-./uninstall.sh   # 断开 Claude Code，移除登录项、App 和状态文件
+./install.sh     # build → install to ~/Applications/Watchlamp.app → connect to Claude Code → launch
+./uninstall.sh   # disconnect from Claude Code, remove the login item, the app and its state files
 ```
 
-## 工作原理
+## How it works
 
 ```
-Claude Code ──hook 事件(JSON)──▶ Watchlamp hook ──▶ ~/.claude/watchlamp/sessions/<会话id>.json
-                                                                │ 每 0.5 秒读取
-                                 悬浮灯板 + 屏幕边框 + 菜单栏图标 ◀─┘
+Claude Code ──hook event (JSON)──▶ Watchlamp hook ──▶ ~/.claude/watchlamp/sessions/<session-id>.json
+                                                                                         │ read every 0.5 s
+                                     floating board + screen edge glow + menu bar icon ◀─┘
 ```
 
-- 钩子注册在 `~/.claude/settings.json`：SessionStart / UserPromptSubmit / PreToolUse / PostToolUse /
-  PermissionRequest / Notification / Stop / StopFailure / SubagentStart/Stop 等 16 个事件。
-- `Watchlamp hook` 每次约 15 ms，不输出任何内容、永远返回 0，不会拦截或改变 Claude 的行为。
-- 整个 App 约 1 MB（Apple 芯片和 Intel 两份代码都在里面），安装包约 0.6 MB；CPU 不到 1%，内存约 16 MB（macOS 上一个只有菜单栏图标和一个窗口的空白 App 就要约 12 MB）。
-  提示音在一个单独的短进程里播放（`Watchlamp play-sound`），音频组件不会加载进 Watchlamp 本身；
-  音量超过 100% 时用系统的峰值限幅器放大，不会破音。
-- 启动时和之后每天检查一次更新（读取 thermport.com/watchlamp/version.json，在一个单独的短进程里完成，网络组件不会加载进 Watchlamp 本身），有新版本时发一条系统通知；除此之外，只有点"检查更新"或发送评价、建议时才联网。
-- 会话的 Claude Code 进程退出后，灯会在 2 秒内自动消失；12 小时没有动静的会话也会被清理。
-- 后台子代理 / 工作流还在跑时灯保持亮着；后台 shell（比如 dev server）不算"运行中"。
+- The hooks are registered in `~/.claude/settings.json` for 16 events, including SessionStart, UserPromptSubmit,
+  PreToolUse, PostToolUse, PermissionRequest, Notification, Stop, StopFailure and SubagentStart/Stop.
+- `Watchlamp hook` takes about 15 ms per call, prints nothing and always exits 0, so it never blocks or changes what
+  Claude does.
+- The whole app is about 1 MB (with code for both Apple silicon and Intel), and the disk image about 0.6 MB. It uses
+  under 1% CPU and about 16 MB of memory (an empty macOS app with just a menu bar icon and one window already takes
+  about 12 MB). Alert sounds play in a separate, short-lived process (`Watchlamp play-sound`), so no audio code loads
+  into Watchlamp itself; above 100% volume, the system's peak limiter makes them louder without clipping.
+- At launch and then once a day, it checks for updates (it reads thermport.com/watchlamp/version.json in a separate,
+  short-lived process, so no networking code loads into Watchlamp itself) and shows a notification when there is a new
+  version. Otherwise it goes online only when you choose Check for Updates… or send a review or a suggestion.
+- When a session's Claude Code process exits, its lamp disappears within 2 seconds; sessions with no activity for 12
+  hours are cleaned up as well.
+- A lamp stays lit while background subagents or workflows are still running; background shells (a dev server, say)
+  don't count as running.
 
-## 已知限制
+## Known limitations
 
-- 批准授权后，要等这个工具执行完灯才从"等你"变成"运行中"（Claude Code 没有"已批准"这个事件）。
-- 按 Esc 或停止按钮中断时没有 Stop 事件，灯板通过读会话记录发现中断，最多晚 2 秒熄灯。
+- After you approve a permission prompt, the lamp switches from waiting to running only when that tool finishes
+  (Claude Code has no "approved" event).
+- Interrupting with Esc or the stop button sends no Stop event: the board notices the interruption in the session's
+  transcript and goes dark up to 2 seconds later.
 
-## 开发
+## Development
 
 ```
-Sources/                  Swift 源码：Hook（事件→状态）、Model、Store、Board（灯板）、EdgeGlow（屏幕边框）、
-                          App（菜单）、Chime（何时响）、Player（播放提示音）、Forms（评价 / 建议窗口）、
-                          Website（检查更新、打赏）、Connection（连接 / 断开 Claude Code）、Lang（多语言）
-Resources/*.lproj/        各语言的界面文字（键就是英文原文，缺的翻译会显示英文；selftest.sh 会检查每种语言是否齐全）
-scripts/selftest.sh       用模拟事件跑一遍状态机，再测连接 / 断开和各语言翻译
-scripts/devtools.sh       开发版命令（不打包进 App）：snapshot 离屏渲染灯板截图（可指定语言）、status 列出会话
-scripts/release.sh        打发布包：Developer ID 签名 → 苹果公证 → 做 dmg → dmg 再公证
-scripts/RenderIcon.swift  编译时画 App 图标
+Sources/                  Swift sources: Hook (events → state), Model, Store, Board (the board), EdgeGlow (screen
+                          edges), App (the menu), Chime (when to play a sound), Player (plays it), Forms (the review
+                          and suggestion windows), Website (update checks, tips), Connection (connecting to and
+                          disconnecting from Claude Code), Lang (languages)
+Resources/*.lproj/        the interface text in each language (the keys are the English text, so a missing translation
+                          shows the English; selftest.sh checks that every language is complete)
+scripts/selftest.sh       runs the state machine on simulated events, then tests connecting, disconnecting and the
+                          translations
+scripts/devtools.sh       developer commands, not shipped in the app: snapshot renders a board screenshot offscreen
+                          (in any language), status lists the sessions
+scripts/release.sh        builds a release: Developer ID signing → Apple notarization → disk image → notarizes the disk
+                          image too
+scripts/RenderIcon.swift  draws the app icon at build time
 ```
 
-`build.sh` 同时编译 Apple 芯片和 Intel 两种架构。命令行也能连接 / 断开：
-`Watchlamp.app/Contents/MacOS/Watchlamp connect`（或 `disconnect`、`connection` 查看状态）。
+`build.sh` builds for both Apple silicon and Intel. You can also connect or disconnect from the command line:
+`Watchlamp.app/Contents/MacOS/Watchlamp connect` (or `disconnect`, or `connection` to show the state).
 
-发新版本：改 `Resources/Info.plist` 里的版本号（`CFBundleShortVersionString`、`CFBundleVersion`），然后运行
+To release a new version, bump `CFBundleShortVersionString` and `CFBundleVersion` in `Resources/Info.plist`, then run
 
 ```bash
-NOTARY_PROFILE=<公证凭据名> scripts/release.sh   # 生成 dist/Watchlamp-<版本>.dmg
+NOTARY_PROFILE=<notary profile> scripts/release.sh   # makes dist/Watchlamp-<version>.dmg
 ```
 
-需要钥匙串里有 "Developer ID Application" 证书（有多张时自动选有效期最长的，也可以用 `SIGN_ID` 指定），
-以及用 `xcrun notarytool store-credentials <公证凭据名>` 存好的公证凭据。
+This needs a "Developer ID Application" certificate in your keychain (if there are several, it picks the one valid
+longest, or set `SIGN_ID`) and notary credentials saved with `xcrun notarytool store-credentials <notary profile>`.
 
 ---
 
-Watchlamp 是个人开源项目，与 Anthropic 没有关联。Claude 和 Claude Code 是 Anthropic 的商标。
+Watchlamp is an independent open-source project, not affiliated with Anthropic. Claude and Claude Code are trademarks of
+Anthropic.
