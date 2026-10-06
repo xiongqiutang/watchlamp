@@ -20,7 +20,7 @@ let tile = NSBezierPath(roundedRect: NSRect(x: s * 0.1, y: s * 0.1, width: s * 0
 NSGradient(starting: NSColor(white: 0.17, alpha: 1), ending: NSColor(white: 0.06, alpha: 1))?.draw(in: tile, angle: -90)
 
 let yellow = NSColor(srgbRed: 1, green: 0xD6 / 255.0, blue: 0x0A / 255.0, alpha: 1)
-let d = s * 0.54
+let d = s * 0.64
 let outer = NSRect(x: (s - d) / 2, y: (s - d) / 2, width: d, height: d)
 let lens = outer.insetBy(dx: d * 0.075, dy: d * 0.075)
 
@@ -28,11 +28,11 @@ let lens = outer.insetBy(dx: d * 0.075, dy: d * 0.075)
 NSGraphicsContext.saveGraphicsState()
 tile.addClip()
 let center = NSPoint(x: s / 2, y: s / 2)
-NSGradient(colors: [0.5, 0.3, 0.1, 0].map { yellow.withAlphaComponent($0) }, atLocations: [0, 0.6, 0.78, 1],
-           colorSpace: .sRGB)?.draw(fromCenter: center, radius: 0, toCenter: center, radius: d * 0.8, options: [])
+NSGradient(colors: [0.5, 0.42, 0.14, 0].map { yellow.withAlphaComponent($0) }, atLocations: [0, 0.78, 0.88, 1],
+           colorSpace: .sRGB)?.draw(fromCenter: center, radius: 0, toCenter: center, radius: s * 0.4, options: [])
 let halo = NSShadow()
 halo.shadowColor = yellow
-halo.shadowBlurRadius = d * 0.14
+halo.shadowBlurRadius = d * 0.12
 halo.shadowOffset = .zero
 halo.set()
 yellow.setFill()
