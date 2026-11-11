@@ -363,6 +363,8 @@ final class BoardView: NSView {
     private var tooltipOwners: [NSString] = []
     private var mouseDownEvent: NSEvent?
     private var dragged = false
+    private var dragStart = NSPoint.zero        // the mouse and the board's origin when the button went down
+    private var originStart = NSPoint.zero
 
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -452,16 +454,19 @@ final class BoardView: NSView {
     override func mouseDown(with event: NSEvent) {
         mouseDownEvent = event
         dragged = false
+        dragStart = NSEvent.mouseLocation
+        originStart = window?.frame.origin ?? .zero
         window?.orderFrontRegardless()   // when it isn't kept on top, a click brings it forward
     }
 
+    /// The board moves itself rather than through the system's window drag, which stops a window at the Dock: it
+    /// can sit anywhere, down beside the Dock's icons included.
     override func mouseDragged(with event: NSEvent) {
-        guard !dragged, let down = mouseDownEvent else { return }
-        let a = down.locationInWindow, b = event.locationInWindow
-        if hypot(b.x - a.x, b.y - a.y) > 3 {
-            dragged = true
-            window?.performDrag(with: down)
-        }
+        guard mouseDownEvent != nil, let window else { return }
+        let p = NSEvent.mouseLocation
+        if !dragged && hypot(p.x - dragStart.x, p.y - dragStart.y) <= 3 { return }
+        dragged = true
+        window.setFrameOrigin(NSPoint(x: originStart.x + p.x - dragStart.x, y: originStart.y + p.y - dragStart.y))
     }
 
     override func mouseUp(with event: NSEvent) {
@@ -496,6 +501,9 @@ final class LightPanel: NSPanel {
 
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
+
+    /// Wherever it is put: AppKit would otherwise nudge it back above the Dock or below the menu bar.
+    override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect { frameRect }
 
     /// On top: above every window, full-screen apps included. Otherwise an ordinary window that others can cover.
     func keepOnTop(_ onTop: Bool) {

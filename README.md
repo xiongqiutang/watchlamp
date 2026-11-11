@@ -28,7 +28,8 @@ menu; in Arabic the board is mirrored.
 
 ## Using it
 
-- **Move it**: drag the board anywhere, on your main display or another one; it remembers where you put it. **Move
+- **Move it**: drag the board anywhere, on your main display or another one, even down beside the Dock's icons; it
+  remembers where you put it. **Move
   board to** in the menu sends it to a particular display in one click.
 - **Click a lamp** to switch to the app that session runs in (the Claude desktop app, Terminal, VS Code…).
 - **Right-click the board**, or click the **small dot in the menu bar**, for the settings:

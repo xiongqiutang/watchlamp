@@ -364,12 +364,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let old = panel.frame
         guard abs(old.width - size.width) > 0.5 || abs(old.height - size.height) > 0.5 else { return }
         var origin = old.origin
-        if let visible = (panel.screen ?? NSScreen.screens.first)?.visibleFrame {
-            // Grow away from the nearest screen edges so the board stays where it was parked.
-            if old.midX > visible.midX { origin.x = old.maxX - size.width }
-            if old.midY > visible.midY { origin.y = old.maxY - size.height }
-            origin.x = max(visible.minX, min(origin.x, visible.maxX - size.width))
-            origin.y = max(visible.minY, min(origin.y, visible.maxY - size.height))
+        if let screen = panel.screen ?? NSScreen.screens.first {
+            // Grow away from the nearest screen edges so the board stays where it was parked; it may sit down in
+            // the Dock's row (the whole screen's bottom), but not under the menu bar.
+            let full = screen.frame, visible = screen.visibleFrame
+            if old.midX > full.midX { origin.x = old.maxX - size.width }
+            if old.midY > full.midY { origin.y = old.maxY - size.height }
+            origin.x = max(full.minX, min(origin.x, full.maxX - size.width))
+            origin.y = max(full.minY, min(origin.y, visible.maxY - size.height))
         }
         panel.setFrame(NSRect(origin: origin, size: size), display: true)
         panel.invalidateShadow()
