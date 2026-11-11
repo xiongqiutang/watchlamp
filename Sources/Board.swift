@@ -31,7 +31,8 @@ struct Metrics {
     var sideMargin: CGFloat { u * 1.25 }     // board edge to the text column
     var bottomMargin: CGFloat { u * 1.35 }   // below the last line of text
     var glowRoom: CGFloat { d * 0.2 }        // added where a lamp's glow meets the board edge
-    var topPad: CGFloat { sideMargin + glowRoom }
+    var topPad: CGFloat { lampsOnly ? lampRim : sideMargin + glowRoom }
+    var lampRim: CGFloat { max(4, d * 0.09) }      // lamps only: a thin dark ring around each lamp, and no more
     var bottomPad: CGFloat { vertical || lampsOnly ? topPad : bottomMargin }
     var leftPad: CGFloat { (vertical && !rtl) || lampsOnly ? topPad : sideMargin }
     var rightPad: CGFloat { (vertical && rtl) || lampsOnly ? topPad : sideMargin }
@@ -52,10 +53,10 @@ struct Metrics {
     var textWidth: CGFloat { lampsOnly ? 0 : vertical ? min(textFit ?? .greatestFiniteMagnitude, u * 15.5) : u * 10.75 }
     var cellWidth: CGFloat { lampsOnly ? d : vertical ? d + lampGap * 1.4 + textWidth : textWidth }
     var cellHeight: CGFloat { lampsOnly ? d : vertical ? max(d, textHeight) : d + lampGap + textHeight }
-    // Lamps only: neighbours stand a third of a lamp apart, so their glows touch without merging; the corners are
-    // round enough to make the board a capsule whose ends follow the end lamps.
-    var columnSpacing: CGFloat { lampsOnly ? d / 3 : u * 0.9 }
-    var rowSpacing: CGFloat { lampsOnly ? d / 3 : u * 1.48 }
+    // Lamps only: neighbours stand a rim and a half apart; the corners are round enough to make the board a capsule
+    // whose ends follow the end lamps.
+    var columnSpacing: CGFloat { lampsOnly ? lampRim * 1.5 : u * 0.9 }
+    var rowSpacing: CGFloat { lampsOnly ? lampRim * 1.5 : u * 1.48 }
     var cornerRadius: CGFloat { lampsOnly ? topPad + d / 2 : u * 1.33 }
 
     /// A row holds at most four lamps (eight without their text), and only as many as fit on the screen; more
