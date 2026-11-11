@@ -79,7 +79,8 @@ extension Tools {
         _ = NSApplication.shared
         let now = Date().timeIntervalSince1970
         let look = Look(size: size, vertical: vertical, showDetail: true,
-                        palette: Palette.all.first { $0.id == paletteID } ?? Palette.all[0], rtl: Lang.rtl)
+                        palette: Palette.all.first { $0.id == paletteID } ?? Palette.all[0], rtl: Lang.rtl,
+                        lampsOnly: ProcessInfo.processInfo.environment["LAMPS_ONLY"] != nil)
         let only = ProcessInfo.processInfo.environment["SAMPLES"].map { Set($0.compactMap { $0.wholeNumberValue }) }
         let samples = sampleRecords(now: now, pid: nil).enumerated().filter { only?.contains($0.offset + 1) ?? true }.map(\.element)
         let items = samples.map { r in

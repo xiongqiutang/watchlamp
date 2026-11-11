@@ -34,6 +34,7 @@
 "Stopped on an error, take a look" = "Stopped on an error, take a look";
 "Interrupted" = "Interrupted";
 "Background tasks ×%@" = "Background tasks ×%@";
+"In the background" = "In the background";
 "Classic: working green · waiting red · idle off" = "Classic: working green · waiting red · idle off";
 "Your turn: working red · click-me yellow · your turn green" = "Your turn: working red · click-me yellow · your turn green";
 "Color-blind friendly: working blue · waiting orange · idle off" = "Color-blind friendly: working blue · waiting orange · idle off";
@@ -63,6 +64,7 @@
 "Layout" = "Layout";
 "Horizontal" = "Horizontal";
 "Vertical" = "Vertical";
+"Lamps only" = "Lamps only";
 "Colors" = "Colors";
 "Show what it's doing" = "Show what it's doing";
 "Screen edge glow" = "Screen edge glow";

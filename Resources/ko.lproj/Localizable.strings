@@ -34,6 +34,7 @@
 "Stopped on an error, take a look" = "오류로 중지됨, 확인해 주세요";
 "Interrupted" = "중단됨";
 "Background tasks ×%@" = "백그라운드 작업 ×%@";
+"In the background" = "백그라운드";
 "Classic: working green · waiting red · idle off" = "클래식: 실행 중 초록 · 확인 필요 빨강 · 대기 중 꺼짐";
 "Your turn: working red · click-me yellow · your turn green" = "당신 차례: 작업 중 빨강 · 클릭 필요 노랑 · 당신 차례 초록";
 "Color-blind friendly: working blue · waiting orange · idle off" = "색약 친화: 실행 중 파랑 · 확인 필요 주황 · 대기 중 꺼짐";
@@ -63,6 +64,7 @@
 "Layout" = "배치";
 "Horizontal" = "가로";
 "Vertical" = "세로";
+"Lamps only" = "램프만";
 "Colors" = "색상";
 "Show what it's doing" = "작업 내용 표시";
 "Screen edge glow" = "화면 테두리 빛내기";

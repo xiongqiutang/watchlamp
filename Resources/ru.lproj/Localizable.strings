@@ -34,6 +34,7 @@
 "Stopped on an error, take a look" = "Остановлен из-за ошибки, проверьте";
 "Interrupted" = "Прервано";
 "Background tasks ×%@" = "Фоновые задачи ×%@";
+"In the background" = "В фоне";
 "Classic: working green · waiting red · idle off" = "Классика: зелёный — работает · красный — ждёт · не горит — простой";
 "Your turn: working red · click-me yellow · your turn green" = "Ваша очередь: красный — работает · жёлтый — нажмите · зелёный — ваша очередь";
 "Color-blind friendly: working blue · waiting orange · idle off" = "Для дальтоников: синий — работает · оранжевый — ждёт · не горит — простой";
@@ -63,6 +64,7 @@
 "Layout" = "Расположение";
 "Horizontal" = "Горизонтально";
 "Vertical" = "Вертикально";
+"Lamps only" = "Только лампы";
 "Colors" = "Цвета";
 "Show what it's doing" = "Показывать, что он делает";
 "Screen edge glow" = "Подсветка краёв экрана";

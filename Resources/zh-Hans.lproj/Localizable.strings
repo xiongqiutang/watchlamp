@@ -33,7 +33,8 @@
 "Stopped on an error" = "出错停止";
 "Stopped on an error, take a look" = "出错停止，去看看";
 "Interrupted" = "已中断";
-"Background tasks ×%@" = "后台子任务 ×%@";
+"Background tasks ×%@" = "后台任务 ×%@";
+"In the background" = "后台运行";
 "Classic: working green · waiting red · idle off" = "经典：运行绿 · 等你红 · 空闲灭";
 "Your turn: working red · click-me yellow · your turn green" = "轮到你：干活红 · 点一下黄 · 轮到你绿";
 "Color-blind friendly: working blue · waiting orange · idle off" = "色弱友好：运行蓝 · 等你橙 · 空闲灭";
@@ -63,6 +64,7 @@
 "Layout" = "排列";
 "Horizontal" = "横排";
 "Vertical" = "竖排";
+"Lamps only" = "只显示灯";
 "Colors" = "配色";
 "Show what it's doing" = "显示正在做什么";
 "Screen edge glow" = "屏幕边框发光";

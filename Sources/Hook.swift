@@ -73,6 +73,7 @@ enum Hook {
                 r.mainActive = false
                 r.activeAgents = []
                 r.backgroundAgents = 0
+                r.backgroundJobs = []
                 r.pending = []
                 r.turnStarted = nil
                 r.endNote = nil
@@ -80,7 +81,7 @@ enum Hook {
             }
         case "UserPromptSubmit":
             r.pending.removeAll()
-            r.turnStarted = now
+            r.turnStarted = r.waitingOnBackground ? r.stateSince : now   // the lamp never went out: keep its clock
             r.beginTurn(now)
             r.activity = "@thinking"
         case "PreToolUse":
@@ -132,7 +133,7 @@ enum Hook {
             if r.backgroundAgents > 0 { r.backgroundAgents -= 1 }
         case "Stop":
             r.endTurn(now, note: nil)
-            r.backgroundAgents = runningBackgroundAgents(obj)
+            (r.backgroundAgents, r.backgroundJobs) = background(obj)
         case "StopFailure":
             r.endTurn(now, note: "@failed")
             let error = clip(errorText(obj["error"]), 40)
@@ -142,17 +143,66 @@ enum Hook {
         }
     }
 
-    /// Background agents and workflows still running when the main agent stops keep the lamp on.
-    /// Background shells (dev servers, monitors) do not: they can run forever.
-    static func runningBackgroundAgents(_ obj: [String: Any]) -> Int {
-        guard let tasks = obj["background_tasks"] as? [[String: Any]] else { return 0 }
-        return tasks.filter { task in
-            let type = (task["type"] as? String ?? "").lowercased()
+    /// What still runs in the background when the main agent stops (Stop's background_tasks) and keeps the lamp on:
+    /// - agents: background subagents, workflows and teammates; each one's SubagentStop takes it off again.
+    /// - jobs: work that ends by itself and then wakes Claude, which stops again with an updated list: a background
+    ///   shell running tests, a build or a script, an MCP task, a cloud session. Described for the lamp's detail line.
+    /// Shells that run until stopped (dev servers, watchers, log tails; see isService) never count, nor do monitors
+    /// or Claude Code's own housekeeping (memory saves, dreams, scans). Types are friendly labels ("shell"), or the
+    /// raw kinds ("local_bash") from older builds.
+    static func background(_ obj: [String: Any]) -> (agents: Int, jobs: [String]) {
+        guard let tasks = obj["background_tasks"] as? [[String: Any]] else { return (0, []) }
+        var agents = 0, jobs: [String] = []
+        for task in tasks {
             let status = (task["status"] as? String ?? "running").lowercased()
-            let agentLike = type.contains("agent") || type.contains("workflow") || type.contains("teammate")
-            return agentLike && (status == "running" || status == "pending")
-        }.count
+            guard status == "running" || status == "pending" else { continue }
+            let command = task["command"] as? String ?? ""
+            var description = (task["description"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            if description.isEmpty { description = command }
+            let type = (task["type"] as? String ?? "").lowercased()
+            switch type {
+            case "subagent", "local_agent", "workflow", "local_workflow", "teammate", "in_process_teammate":
+                agents += 1
+            case "shell", "local_bash":   // a shell with neither command nor description can't be judged: left out
+                if !description.isEmpty && !isService(command: command, description: description) { jobs.append(clip(description)) }
+            case "mcp task", "mcp_task", "cloud session", "remote_agent":
+                jobs.append(clip(description.isEmpty ? type : description))
+            default:
+                break
+            }
+        }
+        return (agents, jobs)
     }
+
+    /// A background shell that runs until it is stopped rather than finishing: a dev or preview server, a file
+    /// watcher, a log tail. Judged by its command first, then by Claude's description of it: a description that names
+    /// a test run or a build wins over one that sounds like a server ("Start the full test suite").
+    static func isService(command: String, description: String) -> Bool {
+        func has(_ text: String, _ pattern: String) -> Bool {
+            text.range(of: pattern, options: [.regularExpression, .caseInsensitive]) != nil
+        }
+        if has(command, finiteCommand) { return false }
+        if has(command, serviceCommand) { return true }
+        if has(description, finiteWords) { return false }
+        return has(description, serviceWords)
+    }
+
+    /// Waits that end on their own although they say "watch".
+    private static let finiteCommand = #"\bgh\s+(run\s+watch|pr\s+checks)\b"#
+    private static let serviceCommand = [
+        #"\bserv(e|er)\b"#, #"runserver"#, #"http[.-]server"#,                      // python -m http.server, server.js
+        #"(?<![\w/.\[-])dev(?![\w/.\]-])"#,                                         // npm run dev, wrangler dev; not /dev/null
+        #"\b(npm|yarn|pnpm|bun)\s+(run\s+)?start\b"#, #"\b(expo|docusaurus|ng)\s+(start|serve)\b"#,
+        #"\bpreview\b"#, #"\bvite\b(?!\s+(build|optimize))"#, #"webpack-dev-server"#,
+        #"\bwatch(ing)?\b"#, #"--watch\b"#, #"\b(nodemon|watchexec|fswatch|entr)\b"#, #"--(hot|reload)\b"#,
+        #"\btail\b[^|;&]*\s-\w*[fF]\b"#, #"\blog\s+stream\b"#, #"\b(journalctl|logs)\b[^|;&]*\s(-f|--follow)\b"#,
+        #"\b(uvicorn|gunicorn|hypercorn|daphne|rackup|puma|live-server|browser-sync|storybook|ngrok|cloudflared)\b"#,
+        #"\b(flask|streamlit)\s+run\b"#, #"\bjupyter[-\s]+(notebook|lab)\b"#, #"\bphp\s+-S\b"#, #"\brails\s+s(erver)?\b"#,
+        #"\b(mongod|redis-server|ollama\s+serve|port-forward)\b"#, #"\bdocker[-\s]+compose\s+up\b(?![^|;&]*\s-d\b)"#,
+        #"\bsleep\s+infinity\b"#,
+    ].joined(separator: "|")
+    private static let finiteWords = #"\b(tests?|testing|specs?|suite|builds?|compile|lint|check|bench(mark)?|install|deploy|migrate|notari[sz]e|release|package|archive|e2e)\b|测试|构建|编译|打包|安装|部署|公证|发布"#
+    private static let serviceWords = #"\bserv(e|er|es|ing)\b|\bwatch(er|ers|es|ing)?\b|\blisten(s|er|ing)?\b|\bdaemon\b|\bpreview\b|\btail\b|^(start|launch|boot|keep)\b|\brun\s+(the\s+)?(app|application)\b|服务|预览|监听|监视|启动|常驻"#
 
     static func errorText(_ value: Any?) -> String {
         if let s = value as? String { return s }

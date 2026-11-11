@@ -32,6 +32,9 @@ struct SessionRecord: Codable {
     var mainActive = false
     var activeAgents: [String] = []
     var backgroundAgents = 0
+    /// What else was still running in the background when the main agent last stopped, and will wake it when it ends:
+    /// a test run, a build, a script (see Hook.background). Dev servers and watchers are never listed.
+    var backgroundJobs: [String] = []
     var pending: [Pending] = []
     var activity = ""
     var turnStarted: Double?
@@ -66,6 +69,7 @@ struct SessionRecord: Codable {
         mainActive = try c.decodeIfPresent(Bool.self, forKey: .mainActive) ?? false
         activeAgents = try c.decodeIfPresent([String].self, forKey: .activeAgents) ?? []
         backgroundAgents = try c.decodeIfPresent(Int.self, forKey: .backgroundAgents) ?? 0
+        backgroundJobs = try c.decodeIfPresent([String].self, forKey: .backgroundJobs) ?? []
         pending = try c.decodeIfPresent([Pending].self, forKey: .pending) ?? []
         activity = try c.decodeIfPresent(String.self, forKey: .activity) ?? ""
         turnStarted = try c.decodeIfPresent(Double.self, forKey: .turnStarted)
@@ -77,8 +81,17 @@ struct SessionRecord: Codable {
         stateSince = try c.decodeIfPresent(Double.self, forKey: .stateSince) ?? 0
     }
 
+    /// Background work that hasn't woken the session for an hour no longer keeps the lamp on: it is most likely
+    /// something that runs until stopped after all (the app drops it; see AppDelegate.maintain).
+    static let backgroundJobLimit: Double = 3600
+
+    /// True while the lamp is lit only by background work: the main agent has stopped and is waiting to be woken.
+    var waitingOnBackground: Bool { state == .working && !mainActive && activeAgents.isEmpty }
+
+    /// When Claude picks up again while the lamp is still lit by background work (woken by a finished test run, say),
+    /// the turn's clock keeps counting from when the lamp lit up.
     mutating func beginTurn(_ now: Double) {
-        if turnStarted == nil { turnStarted = now }
+        if turnStarted == nil { turnStarted = waitingOnBackground ? stateSince : now }
         mainActive = true
         endNote = nil
     }
@@ -104,9 +117,11 @@ struct SessionRecord: Codable {
         if let p = pending.last {
             next = .waiting
             detail = p.detail
-        } else if mainActive || !activeAgents.isEmpty || backgroundAgents > 0 {
+        } else if mainActive || !activeAgents.isEmpty || backgroundAgents > 0 || !backgroundJobs.isEmpty {
             next = .working
-            detail = mainActive || !activeAgents.isEmpty ? activity : "@background:\(backgroundAgents)"
+            let background = backgroundAgents + backgroundJobs.count
+            detail = mainActive || !activeAgents.isEmpty ? activity
+                : background == 1 && backgroundJobs.count == 1 ? "@bg:" + backgroundJobs[0] : "@background:\(background)"
         } else {
             next = .idle
             detail = endNote ?? ""

@@ -24,6 +24,7 @@ struct Metrics {
     let vertical: Bool
     let showDetail: Bool
     var rtl = false
+    var lampsOnly = false                             // just the lamps, on a capsule: no text at all
     var maxWidth = CGFloat.greatestFiniteMagnitude   // the screen's width: rows wrap rather than run off it
 
     var u: CGFloat { max(11, d * 0.135) }
@@ -31,9 +32,9 @@ struct Metrics {
     var bottomMargin: CGFloat { u * 1.35 }   // below the last line of text
     var glowRoom: CGFloat { d * 0.2 }        // added where a lamp's glow meets the board edge
     var topPad: CGFloat { sideMargin + glowRoom }
-    var bottomPad: CGFloat { vertical ? topPad : bottomMargin }
-    var leftPad: CGFloat { vertical && !rtl ? topPad : sideMargin }
-    var rightPad: CGFloat { vertical && rtl ? topPad : sideMargin }
+    var bottomPad: CGFloat { vertical || lampsOnly ? topPad : bottomMargin }
+    var leftPad: CGFloat { (vertical && !rtl) || lampsOnly ? topPad : sideMargin }
+    var rightPad: CGFloat { (vertical && rtl) || lampsOnly ? topPad : sideMargin }
     var bezel: CGFloat { max(2, d * 0.075) }
     var lampGap: CGFloat { d * 0.07 + u * 0.5 }   // clears the glow below the lamp, and the text
     var lineGap: CGFloat { u / 3 }
@@ -44,22 +45,25 @@ struct Metrics {
     var pillHeight: CGFloat { ceil(statusSize * 1.85) }
     var pillPadding: CGFloat { statusSize * 0.75 }
     var detailLine: CGFloat { ceil(detailSize * 1.4) }
-    var textHeight: CGFloat { nameLine + lineGap + pillHeight + (showDetail ? lineGap + detailLine : 0) }
+    var textHeight: CGFloat { lampsOnly ? 0 : nameLine + lineGap + pillHeight + (showDetail ? lineGap + detailLine : 0) }
     // Horizontal: fits the longest status ("Wartet auf dich 03:42", 9.7 em) in every language; the detail line
     // truncates. Vertical: as wide as the text needs (see BoardView.textFit), up to a limit.
     var textFit: CGFloat?
-    var textWidth: CGFloat { vertical ? min(textFit ?? .greatestFiniteMagnitude, u * 15.5) : u * 10.75 }
-    var cellWidth: CGFloat { vertical ? d + lampGap * 1.4 + textWidth : textWidth }
-    var cellHeight: CGFloat { vertical ? max(d, textHeight) : d + lampGap + textHeight }
-    var columnSpacing: CGFloat { u * 0.9 }
-    var rowSpacing: CGFloat { u * 1.48 }
-    var cornerRadius: CGFloat { u * 1.33 }
+    var textWidth: CGFloat { lampsOnly ? 0 : vertical ? min(textFit ?? .greatestFiniteMagnitude, u * 15.5) : u * 10.75 }
+    var cellWidth: CGFloat { lampsOnly ? d : vertical ? d + lampGap * 1.4 + textWidth : textWidth }
+    var cellHeight: CGFloat { lampsOnly ? d : vertical ? max(d, textHeight) : d + lampGap + textHeight }
+    // Lamps only: neighbours stand a third of a lamp apart, so their glows touch without merging; the corners are
+    // round enough to make the board a capsule whose ends follow the end lamps.
+    var columnSpacing: CGFloat { lampsOnly ? d / 3 : u * 0.9 }
+    var rowSpacing: CGFloat { lampsOnly ? d / 3 : u * 1.48 }
+    var cornerRadius: CGFloat { lampsOnly ? topPad + d / 2 : u * 1.33 }
 
-    /// A row holds at most four lamps, and only as many as fit on the screen; more sessions wrap onto new rows.
+    /// A row holds at most four lamps (eight without their text), and only as many as fit on the screen; more
+    /// sessions wrap onto new rows.
     func columns(_ count: Int) -> Int {
         guard !vertical else { return 1 }
         let fitting = Int((maxWidth - leftPad - rightPad + columnSpacing) / (cellWidth + columnSpacing))
-        return min(max(1, count), 4, max(1, fitting))
+        return min(max(1, count), lampsOnly ? 8 : 4, max(1, fitting))
     }
     func rows(_ count: Int) -> Int { (max(1, count) + columns(count) - 1) / columns(count) }
 
@@ -202,7 +206,8 @@ final class LampCell {
         pillY = cell.maxY - top - m.pillHeight
         top += m.pillHeight + m.lineGap
         detail.frame = CGRect(x: textLeft, y: cell.maxY - top - m.detailLine, width: m.textWidth, height: m.detailLine)
-        detail.isHidden = !m.showDetail
+        detail.isHidden = !m.showDetail || m.lampsOnly
+        for text in [name, pill, status] as [CALayer] { text.isHidden = m.lampsOnly }
         let side: CATextLayerAlignmentMode = m.rtl ? .right : .left
         name.alignmentMode = m.vertical ? side : .center
         detail.alignmentMode = m.vertical ? side : .center
@@ -221,6 +226,7 @@ final class LampCell {
             styleKey = key
             applyStyle(item, lit: lit, color: color, scale: scale)
         }
+        guard !m.lampsOnly else { return }
 
         // Shrink long project names (down to two thirds) before truncating them.
         let fitKey = "\(item.label)|\(m.nameSize)|\(m.textWidth)"
@@ -377,8 +383,8 @@ final class BoardView: NSView {
         guard let root = layer else { return }
         let screen = window?.screen ?? NSScreen.main
         var m = Metrics(d: CGFloat(look.size), vertical: look.vertical, showDetail: look.showDetail, rtl: look.rtl,
-                        maxWidth: screen?.visibleFrame.width ?? .greatestFiniteMagnitude)
-        if m.vertical {
+                        lampsOnly: look.lampsOnly, maxWidth: screen?.visibleFrame.width ?? .greatestFiniteMagnitude)
+        if m.vertical && !m.lampsOnly {
             // Measuring text is the costly part of a refresh; redo it only when what it measures changes.
             let key = "\(m.d)|\(m.showDetail)|\(Lang.code ?? "")|" + newItems.map {
                 "\($0.label)\u{1}\($0.status.count)\u{1}\($0.record == nil ? $0.detail : "")"
@@ -394,7 +400,7 @@ final class BoardView: NSView {
 
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        let key = "\(newItems.count)|\(m.columns(newItems.count))|\(m.d)|\(m.vertical)|\(m.showDetail)|\(m.rtl)|\(m.textWidth)"
+        let key = "\(newItems.count)|\(m.columns(newItems.count))|\(m.d)|\(m.vertical)|\(m.showDetail)|\(m.rtl)|\(m.lampsOnly)|\(m.textWidth)"
         if key != structureKey {
             structureKey = key
             cells.forEach { $0.remove() }

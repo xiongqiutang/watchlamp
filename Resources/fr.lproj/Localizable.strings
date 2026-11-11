@@ -34,6 +34,7 @@
 "Stopped on an error, take a look" = "Arrêté sur une erreur, jetez un œil";
 "Interrupted" = "Interrompu";
 "Background tasks ×%@" = "Tâches en arrière-plan ×%@";
+"In the background" = "En arrière-plan";
 "Classic: working green · waiting red · idle off" = "Classique : vert en cours · rouge en attente · éteint au repos";
 "Your turn: working red · click-me yellow · your turn green" = "À vous : rouge en cours · jaune à cliquer · vert à vous";
 "Color-blind friendly: working blue · waiting orange · idle off" = "Adapté aux daltoniens : bleu en cours · orange en attente · éteint au repos";
@@ -63,6 +64,7 @@
 "Layout" = "Disposition";
 "Horizontal" = "Horizontale";
 "Vertical" = "Verticale";
+"Lamps only" = "Lampes seules";
 "Colors" = "Couleurs";
 "Show what it's doing" = "Afficher ce qu'il fait";
 "Screen edge glow" = "Lueur sur les bords de l'écran";

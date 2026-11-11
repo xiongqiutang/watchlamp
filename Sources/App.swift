@@ -263,6 +263,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     current = fresh
                 }
             }
+            // Background work silent for an hour was most likely something that runs until stopped after all.
+            if current.waitingOnBackground, current.backgroundAgents == 0, !current.backgroundJobs.isEmpty,
+               now - current.updated > SessionRecord.backgroundJobLimit {
+                let seen = current.updated
+                Store.locked {
+                    guard var fresh = Store.load(record.sessionId), fresh.updated == seen else { return }
+                    fresh.backgroundJobs = []
+                    fresh.recompute(now)
+                    Store.save(fresh)
+                    current = fresh
+                }
+            }
             kept.append(current)
         }
         return kept
@@ -285,6 +297,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 label += " #\(seen[r.project, default: 0])"
             }
             var tip = [r.cwd]
+            if prefs.lampsOnly { tip.insert(label, at: 0) }   // the name isn't on the board
             if let title = r.title, !title.isEmpty { tip.append(title) }
             if let app = appName(r.hostBundle) { tip.append(L("Running in %@ · click to switch to it", app)) }
             return LampItem(id: r.sessionId, label: label, state: r.state,
@@ -473,13 +486,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(submenu(L("Layout"), [
             ActionItem(L("Horizontal"), checked: !prefs.vertical) { [weak self] in self?.change { $0.vertical = false } },
             ActionItem(L("Vertical"), checked: prefs.vertical) { [weak self] in self?.change { $0.vertical = true } },
+            .separator(),
+            ActionItem(L("Lamps only"), checked: prefs.lampsOnly) { [weak self] in self?.change { $0.lampsOnly.toggle() } },
         ]))
         menu.addItem(submenu(L("Colors"), Palette.all.map { palette in
             ActionItem(L(palette.title), checked: prefs.paletteID == palette.id) { [weak self] in
                 self?.change { $0.paletteID = palette.id }
             }
         }))
-        menu.addItem(ActionItem(L("Show what it's doing"), checked: prefs.showDetail) { [weak self] in
+        menu.addItem(ActionItem(L("Show what it's doing"), checked: prefs.showDetail, enabled: !prefs.lampsOnly) { [weak self] in
             self?.change { $0.showDetail.toggle() }
         })
         menu.addItem(.separator())

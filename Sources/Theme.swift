@@ -42,6 +42,8 @@ struct Look {
     var showDetail: Bool
     var palette: Palette
     var rtl = false
+    /// Only the lamps, no names or text: a row (or a column) of lamps on a capsule.
+    var lampsOnly = false
 }
 
 @MainActor
@@ -66,6 +68,10 @@ final class Prefs {
     var showDetail: Bool {
         get { defaults.object(forKey: "showDetail") as? Bool ?? true }
         set { defaults.set(newValue, forKey: "showDetail") }
+    }
+    var lampsOnly: Bool {
+        get { defaults.bool(forKey: "lampsOnly") }
+        set { defaults.set(newValue, forKey: "lampsOnly") }
     }
     /// 0 off, 1 only while waiting for you, 2 while working or waiting.
     var edgeMode: Int {
@@ -114,7 +120,7 @@ final class Prefs {
     }
     var palette: Palette { Palette.all.first { $0.id == paletteID } ?? Palette.all[0] }
     var look: Look {
-        Look(size: size, vertical: vertical, showDetail: showDetail, palette: palette, rtl: Lang.rtl)
+        Look(size: size, vertical: vertical, showDetail: showDetail, palette: palette, rtl: Lang.rtl, lampsOnly: lampsOnly)
     }
     var origin: NSPoint? {
         get {
@@ -193,6 +199,7 @@ enum Format {
         case "failed": return L("Stopped on an error")
         case "interrupted": return L("Interrupted")
         case "background": return L("Background tasks ×%@", arg ?? "")
+        case "bg": return with(L("In the background"))
         default: return arg ?? key
         }
     }

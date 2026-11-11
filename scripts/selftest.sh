@@ -57,6 +57,44 @@ send StopFailure '"error":"rate_limit"';                      expect "API error"
 send UserPromptSubmit '"prompt":"go on"';                     expect "user returns" working
 send Notification '"notification_type":"idle_prompt","message":"Claude is waiting for your input"'
                                                               expect "idle notice after missed Stop" idle
+
+# Background work after the turn: a test run or a build keeps the lamp on (and wakes Claude when it ends); a dev
+# server, a watcher or a monitor does not. Payloads as Claude Code sends them (friendly type labels).
+bg() {  # bg <type> <command> <description>
+  printf '{"id":"b%s","type":"%s","status":"running","command":"%s","description":"%s"}' "$RANDOM" "$1" "$2" "$3"
+}
+stop_with() { send UserPromptSubmit '"prompt":"x"'; send Stop "\"background_tasks\":[$1]"; }
+stop_with "$(bg shell 'npm test' 'Run the full test suite')"
+                                                              expect "background test run" working "@bg:Run the full test suite"
+send PreToolUse '"tool_name":"Bash","tool_use_id":"t9","tool_input":{"command":"cat log","description":"Read the results"}'
+                                                              expect "woken by the finished run" working "@cmd:Read the results"
+[[ $(jq '.turn_started == .state_since' "$FILE") == true ]] && echo "  ok    the clock keeps counting from the first turn" \
+  || { echo "  FAIL  the clock restarted"; fails=$((fails + 1)); }
+send Stop '"background_tasks":[]';                            expect "nothing left in the background" idle
+stop_with "$(bg shell 'npm run dev' 'Start the dev server')"; expect "dev server" idle
+stop_with "$(bg shell 'python3 -m http.server 8099 --bind 127.0.0.1' 'Serve the site for testing')"
+                                                              expect "local test server" idle
+stop_with "$(bg shell 'npx wrangler dev --local --port 8796' 'Run the reviews worker locally')"
+                                                              expect "wrangler dev" idle
+stop_with "$(bg shell 'python3 feed/server.py 8793 log' 'Run the local feed server')"
+                                                              expect "a server script" idle
+stop_with "$(bg shell 'npx jest --watch' 'Run the tests in watch mode')"
+                                                              expect "tests in watch mode" idle
+stop_with "$(bg shell 'tail -f build.log' 'Follow the log')";  expect "log tail" idle
+stop_with "$(bg shell 'python3 app.py' 'Start the Flask app')"; expect "app started by description" idle
+stop_with "$(bg monitor '' 'Watch CI')";                       expect "monitor" idle
+stop_with "$(bg shell 'swift test > /dev/null 2>&1' 'Start the full test run')"
+                                                              expect "test run despite Start and /dev/null" working "@bg:Start the full test run"
+stop_with "$(bg shell 'NOTARY_PROFILE=x scripts/release.sh' 'Build, sign and notarize the disk image')"
+                                                              expect "release build" working "@bg:Build, sign and notarize"
+stop_with "$(bg shell 'gh run watch 123' 'Watch the CI run until it finishes')"
+                                                              expect "gh run watch ends by itself" working "@bg:Watch the CI run"
+stop_with "$(bg shell 'npm run dev' 'Start the dev server'),$(bg shell 'pytest -x' 'Run the unit tests')"
+                                                              expect "server and tests: the tests count" working "@bg:Run the unit tests"
+stop_with "$(bg subagent '' 'Review the diff'),$(bg shell 'make' 'Build the app')"
+                                                              expect "an agent and a build" working "@background:2"
+stop_with "$(bg 'memory save' '' 'Save memories')";            expect "Claude Code housekeeping" idle
+
 send SessionEnd '"reason":"exit"'
 [[ ! -e "$FILE" ]] && echo "  ok    session end removes the lamp" || { echo "  FAIL  session end"; fails=$((fails + 1)); }
 

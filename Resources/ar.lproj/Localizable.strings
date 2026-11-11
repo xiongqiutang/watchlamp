@@ -34,6 +34,7 @@
 "Stopped on an error, take a look" = "توقف بسبب خطأ، ألقِ نظرة";
 "Interrupted" = "تمت المقاطعة";
 "Background tasks ×%@" = "مهام في الخلفية ×%@";
+"In the background" = "في الخلفية";
 "Classic: working green · waiting red · idle off" = "كلاسيكي: أخضر يعمل · أحمر بانتظارك · مطفأ خامل";
 "Your turn: working red · click-me yellow · your turn green" = "دورك: أحمر يعمل · أصفر انقر · أخضر دورك";
 "Color-blind friendly: working blue · waiting orange · idle off" = "مناسب لعمى الألوان: أزرق يعمل · برتقالي بانتظارك · مطفأ خامل";
@@ -63,6 +64,7 @@
 "Layout" = "التخطيط";
 "Horizontal" = "أفقي";
 "Vertical" = "عمودي";
+"Lamps only" = "المصابيح فقط";
 "Colors" = "الألوان";
 "Show what it's doing" = "عرض ما يفعله";
 "Screen edge glow" = "توهج حواف الشاشة";

@@ -34,6 +34,7 @@
 "Stopped on an error, take a look" = "エラーで停止しました。確認してください";
 "Interrupted" = "中断しました";
 "Background tasks ×%@" = "バックグラウンドタスク ×%@";
+"In the background" = "バックグラウンド";
 "Classic: working green · waiting red · idle off" = "クラシック：実行中は緑・操作待ちは赤・待機中は消灯";
 "Your turn: working red · click-me yellow · your turn green" = "あなたの番：作業中は赤・要クリックは黄・あなたの番は緑";
 "Color-blind friendly: working blue · waiting orange · idle off" = "色覚配慮：実行中は青・操作待ちはオレンジ・待機中は消灯";
@@ -63,6 +64,7 @@
 "Layout" = "レイアウト";
 "Horizontal" = "横並び";
 "Vertical" = "縦並び";
+"Lamps only" = "ランプのみ";
 "Colors" = "配色";
 "Show what it's doing" = "作業内容を表示";
 "Screen edge glow" = "画面の縁を光らせる";

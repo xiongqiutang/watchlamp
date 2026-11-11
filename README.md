@@ -33,7 +33,8 @@ menu; in Arabic the board is mirrored.
 - **Click a lamp** to switch to the app that session runs in (the Claude desktop app, Terminal, VS Code…).
 - **Right-click the board**, or click the **small dot in the menu bar**, for the settings:
   - Lamp size: Small / Medium / Large / X-Large / Huge / Maximum (pick a bigger one if you sit farther away)
-  - Layout: Horizontal / Vertical (a horizontal board wraps after 4 lamps in a row)
+  - Layout: Horizontal / Vertical (a horizontal board wraps after 4 lamps in a row), and **Lamps only**: just the
+    round lamps on a small capsule, no names or text (hover over a lamp to see which project it is; up to 8 in a row)
   - Colors: Classic (working green, waiting red), Your turn (working red, click-me yellow, your turn green, as seen
     from your side of the desk), Color-blind friendly (working blue, waiting orange)
   - Show what it's doing, Screen edge glow, Hide board when there are no sessions, Launch at login
@@ -101,8 +102,10 @@ Claude Code ──hook event (JSON)──▶ Watchlamp hook ──▶ ~/.claude/
   version. Otherwise it goes online only when you choose Check for Updates… or send a review or a suggestion.
 - When a session's Claude Code process exits, its lamp disappears within 2 seconds; sessions with no activity for 12
   hours are cleaned up as well.
-- A lamp stays lit while background subagents or workflows are still running; background shells (a dev server, say)
-  don't count as running.
+- A lamp stays lit while Claude waits on background work that ends by itself (subagents, workflows, or a test run,
+  build or script started in the background), and shows what is running. Things that run until stopped (dev and
+  preview servers, file watchers, log tails) don't count; neither does background work that hasn't reported back
+  within an hour.
 
 ## Known limitations
 
