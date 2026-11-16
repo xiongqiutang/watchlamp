@@ -310,7 +310,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 label += " #\(seen[r.project, default: 0])"
             }
             var tip = [r.cwd]
-            if prefs.lampsOnly { tip.insert(label, at: 0) }   // the name isn't on the board
             if let title = r.title, !title.isEmpty { tip.append(title) }
             if let app = appName(r.hostBundle) { tip.append(L("Running in %@ · click to switch to it", app)) }
             return LampItem(id: r.sessionId, label: label, state: r.state,

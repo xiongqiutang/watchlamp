@@ -361,6 +361,9 @@ final class BoardView: NSView {
     private var fitWidth: CGFloat = 0
     private var tooltipKey = ""
     private var tooltipOwners: [NSString] = []
+    private var look: Look?
+    private var hovered: Int?                    // the lamp under the mouse, named in hoverLabel (lamps only)
+    private lazy var hoverLabel = HoverLabel()
     private var mouseDownEvent: NSEvent?
     private var dragged = false
     private var dragStart = NSPoint.zero        // the mouse and the board's origin when the button went down
@@ -420,7 +423,9 @@ final class BoardView: NSView {
 
         items = newItems
         preferredSize = size
+        self.look = look
         updateTooltips()
+        showHover()
     }
 
     /// The vertical layout's text column ends where its text does, so the right margin matches the others.
@@ -446,12 +451,54 @@ final class BoardView: NSView {
         guard key != tooltipKey else { return }
         tooltipKey = key
         removeAllToolTips()
+        guard look?.lampsOnly != true else { return }
         // An NSString owner answers with its own text; the view does not retain owners, so keep them.
         tooltipOwners = items.map { $0.tooltip as NSString }
         for (frame, owner) in zip(frames, tooltipOwners) { addToolTip(frame, owner: owner, userData: nil) }
     }
 
+    // MARK: Hover: with lamps only, the lamp under the mouse shows its project's name at once. A tooltip would wait, and
+    // macOS shows none at all while another app is in front, which for the board is always.
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        trackingAreas.forEach(removeTrackingArea)
+        addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseEnteredAndExited, .mouseMoved, .activeAlways, .inVisibleRect],
+                                       owner: self, userInfo: nil))
+    }
+
+    override func mouseMoved(with event: NSEvent) { hover(at: event) }
+    override func mouseEntered(with event: NSEvent) { hover(at: event) }
+    override func mouseExited(with event: NSEvent) { hover(nil) }
+
+    private func hover(at event: NSEvent) {
+        guard mouseDownEvent == nil else { return }   // not while the board is being dragged
+        let point = convert(event.locationInWindow, from: nil)
+        hover(frames.firstIndex { $0.contains(point) })
+    }
+
+    private func hover(_ index: Int?) {
+        hovered = index
+        showHover()
+    }
+
+    /// Shows (or follows, as the status ticks and the board moves) the name of the lamp under the mouse.
+    private func showHover() {
+        guard let i = hovered, i < items.count, i < frames.count, look?.lampsOnly == true, let window else {
+            hoverLabel.hide()
+            return
+        }
+        let item = items[i]
+        var color = NSColor(white: 0.66, alpha: 1)
+        if let palette = look?.palette, palette.lit(item.state) && !item.dark {
+            color = palette.color(item.state).mixed(0.3, with: .white)
+        }
+        hoverLabel.show(name: item.label, status: item.status, color: color,
+                        over: window.convertToScreen(convert(frames[i], to: nil)), on: window.screen)
+    }
+
     override func mouseDown(with event: NSEvent) {
+        hover(nil)
         mouseDownEvent = event
         dragged = false
         dragStart = NSEvent.mouseLocation
@@ -479,9 +526,72 @@ final class BoardView: NSView {
     }
 
     override func rightMouseDown(with event: NSEvent) {
+        hover(nil)
         let point = convert(event.locationInWindow, from: nil)
         let i = frames.firstIndex { $0.contains(point) }
         onMenu?(event, self, i.flatMap { $0 < items.count ? items[$0].record : nil })
+    }
+}
+
+/// A small dark bubble just above a lamp with its project's name and status; the mouse goes through it.
+@MainActor
+final class HoverLabel {
+    private let panel = NSPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: true)
+    private let name = NSTextField(labelWithString: "")
+    private let status = NSTextField(labelWithString: "")
+    private let box = NSView()
+
+    init() {
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = true
+        panel.ignoresMouseEvents = true
+        panel.level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 1)   // above the board
+        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
+        panel.hidesOnDeactivate = false
+        panel.isReleasedWhenClosed = false
+        panel.animationBehavior = .none
+        box.wantsLayer = true
+        box.layer?.backgroundColor = NSColor(white: 0.08, alpha: 0.94).cgColor
+        box.layer?.borderColor = NSColor(white: 1, alpha: 0.12).cgColor
+        box.layer?.borderWidth = 1
+        name.font = Fonts.rounded(13, .bold)
+        name.textColor = NSColor(white: 0.97, alpha: 1)
+        status.font = Fonts.rounded(11.5, .semibold, monospacedDigits: true)
+        for label in [name, status] { label.alignment = .center; label.lineBreakMode = .byTruncatingTail }
+        let stack = NSStackView(views: [name, status])
+        stack.orientation = .vertical
+        stack.spacing = 1
+        stack.edgeInsets = NSEdgeInsets(top: 6, left: 12, bottom: 7, right: 12)
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        box.addSubview(stack)
+        NSLayoutConstraint.activate([stack.leadingAnchor.constraint(equalTo: box.leadingAnchor),
+                                     stack.trailingAnchor.constraint(equalTo: box.trailingAnchor),
+                                     stack.topAnchor.constraint(equalTo: box.topAnchor),
+                                     stack.bottomAnchor.constraint(equalTo: box.bottomAnchor),
+                                     name.widthAnchor.constraint(lessThanOrEqualToConstant: 320)])
+        panel.contentView = box
+    }
+
+    /// `lamp`: the lamp's frame on screen. Above it if there is room below the menu bar, otherwise below it.
+    func show(name text: String, status line: String, color: NSColor, over lamp: NSRect, on screen: NSScreen?) {
+        if name.stringValue != text { name.stringValue = text }
+        if status.stringValue != line { status.stringValue = line }
+        status.textColor = color
+        box.layoutSubtreeIfNeeded()
+        let size = box.fittingSize
+        box.layer?.cornerRadius = min(12, size.height / 2)
+        let room = screen?.visibleFrame ?? NSScreen.main?.visibleFrame ?? .infinite, whole = screen?.frame ?? room
+        var origin = NSPoint(x: lamp.midX - size.width / 2, y: lamp.maxY + 6)
+        if origin.y + size.height > room.maxY { origin.y = lamp.minY - 6 - size.height }
+        origin.x = max(whole.minX + 4, min(origin.x, whole.maxX - size.width - 4))
+        let frame = NSRect(origin: origin, size: size)
+        if panel.frame != frame { panel.setFrame(frame, display: true) }
+        if !panel.isVisible { panel.orderFrontRegardless() }
+    }
+
+    func hide() {
+        if panel.isVisible { panel.orderOut(nil) }
     }
 }
 
