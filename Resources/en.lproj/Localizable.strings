@@ -67,6 +67,11 @@
 "Lamps only" = "Lamps only";
 "Colors" = "Colors";
 "Show what it's doing" = "Show what it's doing";
+"Hide “%@”" = "Hide “%@”";
+"Lamps to show" = "Lamps to show";
+"Show all" = "Show all";
+"All lamps hidden" = "All lamps hidden";
+"Right-click to choose which lamps to show" = "Right-click to choose which lamps to show";
 "Screen edge glow" = "Screen edge glow";
 "Move board to" = "Move board to";
 "%@ (main)" = "%@ (main)";

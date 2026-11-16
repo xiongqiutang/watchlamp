@@ -69,7 +69,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let chime = Chime()
     private var statusItem: NSStatusItem?
     private var timer: Timer?
-    private var sessions: [SessionRecord] = []
+    private var sessions: [SessionRecord] = []      // the ones with a lamp: every session but the hidden projects'
+    private var allSessions: [SessionRecord] = []
     private var lastMaintenance = 0.0
     private var iconKey = ""
     private var appNames: [String: String] = [:]
@@ -94,9 +95,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         Updates.listenIfNoticePending()
         lastUpdateCheck = Date().timeIntervalSince1970 - 3600 + 30   // the first update check half a minute after launch
         board.onClick = { [weak self] record in self?.reveal(record) }
-        board.onMenu = { [weak self] event, view in
+        board.onMenu = { [weak self] event, view, record in
             guard let self else { return }
-            NSMenu.popUpContextMenu(self.makeMenu(), with: event, for: view)
+            NSMenu.popUpContextMenu(self.makeMenu(for: record), with: event, for: view)
         }
 
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
@@ -221,8 +222,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             Updates.checkDaily()
         }
         list.sort { ($0.started, $0.sessionId) < ($1.started, $1.sessionId) }
-        sessions = list
-        chime.update(list, now: now, prefs: prefs)
+        allSessions = list
+        // A hidden project's sessions are left out of everything below: no lamp, no sound, no screen glow.
+        let hidden = Set(prefs.hiddenProjects)
+        sessions = list.filter { !hidden.contains(Self.projectKey($0)) }
+        chime.update(sessions, now: now, prefs: prefs)
 
         board.update(items(now: now), look: prefs.look)
         fitPanel()
@@ -280,7 +284,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return kept
     }
 
+    /// What hiding a lamp hides: its project, so the project's later sessions stay hidden too.
+    static func projectKey(_ r: SessionRecord) -> String { r.cwd.isEmpty ? r.project : r.cwd }
+
     private func items(now: Double) -> [LampItem] {
+        // Every lamp hidden: one dark lamp stays, so the board can still be right-clicked to bring them back.
+        if sessions.isEmpty && !allSessions.isEmpty {
+            return [LampItem(id: "hidden", label: "Claude", state: .idle, status: L("All lamps hidden"),
+                             detail: L("Right-click to choose which lamps to show"),
+                             tooltip: L("Right-click to choose which lamps to show"), record: nil, dark: true)]
+        }
         guard !sessions.isEmpty else {
             return [LampItem(id: "none", label: "Claude", state: .idle, status: L("No sessions"),
                              detail: connection == .connected ? L("Lights up when Claude Code starts working")
@@ -459,16 +472,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         fill(menu)
     }
 
-    private func makeMenu() -> NSMenu {
+    /// `record`: the lamp that was right-clicked, if any; its project can be hidden from the top of the menu.
+    private func makeMenu(for record: SessionRecord? = nil) -> NSMenu {
         let menu = NSMenu()
-        fill(menu)
+        fill(menu, lamp: record)
         return menu
     }
 
-    private func fill(_ menu: NSMenu) {
+    private func fill(_ menu: NSMenu, lamp: SessionRecord? = nil) {
         menu.autoenablesItems = false
         let now = Date().timeIntervalSince1970
         menu.addItem(ActionItem("Watchlamp", enabled: false))
+        if let lamp {
+            let key = Self.projectKey(lamp)
+            menu.addItem(ActionItem(L("Hide “%@”", lamp.project.isEmpty ? "Claude" : lamp.project)) { [weak self] in
+                self?.change { $0.hiddenProjects.append(key) }
+            })
+        }
         if connection != .connected {
             menu.addItem(ActionItem(L("Connect to Claude Code")) { [weak self] in self?.connectNow() })
         }
@@ -499,6 +519,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(ActionItem(L("Show what it's doing"), checked: prefs.showDetail, enabled: !prefs.lampsOnly) { [weak self] in
             self?.change { $0.showDetail.toggle() }
         })
+        menu.addItem(lampsToShow())
         menu.addItem(.separator())
 
         menu.addItem(submenu(L("Screen edge glow"), Prefs.edgeModes.enumerated().map { index, title in
@@ -546,6 +567,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(ActionItem(L("Leave a Tip…")) { Website.tip() })
         menu.addItem(.separator())
         menu.addItem(ActionItem(L("Quit Watchlamp")) { NSApp.terminate(nil) })
+    }
+
+    /// One entry per project: those with a session now, and the hidden ones (so they can be shown again even when
+    /// nothing runs there). Ticked means it has a lamp.
+    private func lampsToShow() -> NSMenuItem {
+        let hidden = prefs.hiddenProjects
+        var keys: [String] = []
+        for key in allSessions.map(Self.projectKey) + hidden where !keys.contains(key) { keys.append(key) }
+        func name(_ key: String) -> String {
+            allSessions.first { Self.projectKey($0) == key }?.project ?? Hook.projectName(key)
+        }
+        var entries: [NSMenuItem] = keys.sorted { name($0).localizedStandardCompare(name($1)) == .orderedAscending }.map { key in
+            let entry = ActionItem(name(key), checked: !hidden.contains(key)) { [weak self] in
+                self?.change { prefs in
+                    if prefs.hiddenProjects.contains(key) { prefs.hiddenProjects.removeAll { $0 == key } }
+                    else { prefs.hiddenProjects.append(key) }
+                }
+            }
+            entry.toolTip = key
+            return entry
+        }
+        if entries.isEmpty { entries.append(ActionItem(L("No Claude Code sessions"), enabled: false)) }
+        entries += [.separator(), ActionItem(L("Show all"), enabled: !hidden.isEmpty) { [weak self] in
+            self?.change { $0.hiddenProjects = [] }
+        }]
+        return submenu(L("Lamps to show"), entries)
     }
 
     /// Picking a sound plays it.

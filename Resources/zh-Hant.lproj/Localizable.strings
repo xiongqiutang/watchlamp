@@ -67,6 +67,11 @@
 "Lamps only" = "只顯示燈";
 "Colors" = "配色";
 "Show what it's doing" = "顯示正在做什麼";
+"Hide “%@”" = "隱藏「%@」";
+"Lamps to show" = "顯示哪些燈";
+"Show all" = "全部顯示";
+"All lamps hidden" = "燈都已隱藏";
+"Right-click to choose which lamps to show" = "按右鍵選擇顯示哪些燈";
 "Screen edge glow" = "螢幕邊框發光";
 "Move board to" = "把燈板移到";
 "%@ (main)" = "%@（主螢幕）";

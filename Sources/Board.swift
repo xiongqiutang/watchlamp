@@ -349,7 +349,7 @@ final class LampCell {
 @MainActor
 final class BoardView: NSView {
     var onClick: ((SessionRecord) -> Void)?
-    var onMenu: ((NSEvent, NSView) -> Void)?
+    var onMenu: ((NSEvent, NSView, SessionRecord?) -> Void)?   // with the session whose lamp was right-clicked
     private(set) var preferredSize = NSSize(width: 200, height: 200)
 
     private let background = CAGradientLayer()
@@ -479,7 +479,9 @@ final class BoardView: NSView {
     }
 
     override func rightMouseDown(with event: NSEvent) {
-        onMenu?(event, self)
+        let point = convert(event.locationInWindow, from: nil)
+        let i = frames.firstIndex { $0.contains(point) }
+        onMenu?(event, self, i.flatMap { $0 < items.count ? items[$0].record : nil })
     }
 }
 

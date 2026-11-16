@@ -67,6 +67,11 @@
 "Lamps only" = "Только лампы";
 "Colors" = "Цвета";
 "Show what it's doing" = "Показывать, что он делает";
+"Hide “%@”" = "Скрыть «%@»";
+"Lamps to show" = "Показывать лампы";
+"Show all" = "Показать все";
+"All lamps hidden" = "Все лампы скрыты";
+"Right-click to choose which lamps to show" = "Щёлкните правой кнопкой, чтобы выбрать, какие лампы показывать";
 "Screen edge glow" = "Подсветка краёв экрана";
 "Move board to" = "Переместить панель на";
 "%@ (main)" = "%@ (основной)";

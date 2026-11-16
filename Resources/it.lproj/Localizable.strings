@@ -67,6 +67,11 @@
 "Lamps only" = "Solo lampade";
 "Colors" = "Colori";
 "Show what it's doing" = "Mostra cosa sta facendo";
+"Hide “%@”" = "Nascondi «%@»";
+"Lamps to show" = "Lampade visibili";
+"Show all" = "Mostra tutte";
+"All lamps hidden" = "Tutte le lampade nascoste";
+"Right-click to choose which lamps to show" = "Clic destro per scegliere quali lampade mostrare";
 "Screen edge glow" = "Bagliore sui bordi dello schermo";
 "Move board to" = "Sposta il pannello su";
 "%@ (main)" = "%@ (principale)";

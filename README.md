@@ -32,6 +32,10 @@ menu; in Arabic the board is mirrored.
   remembers where you put it. **Move
   board to** in the menu sends it to a particular display in one click.
 - **Click a lamp** to switch to the app that session runs in (the Claude desktop app, Terminal, VS Code…).
+- **Hide a lamp**: right-click it and choose **Hide “project”**. A hidden project gets no lamp, no sound and no screen
+  glow, and its later sessions stay hidden too. **Lamps to show** in the menu lists every project with a tick; tick one
+  to bring it back, or choose **Show all**. If every lamp is hidden, one dark lamp stays on the board so you can still
+  right-click it.
 - **Right-click the board**, or click the **small dot in the menu bar**, for the settings:
   - Lamp size: Small / Medium / Large / X-Large / Huge / Maximum (pick a bigger one if you sit farther away)
   - Layout: Horizontal / Vertical (a horizontal board wraps after 4 lamps in a row), and **Lamps only**: just the

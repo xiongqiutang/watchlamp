@@ -67,6 +67,11 @@
 "Lamps only" = "ランプのみ";
 "Colors" = "配色";
 "Show what it's doing" = "作業内容を表示";
+"Hide “%@”" = "「%@」を隠す";
+"Lamps to show" = "表示するランプ";
+"Show all" = "すべて表示";
+"All lamps hidden" = "すべてのランプを非表示中";
+"Right-click to choose which lamps to show" = "右クリックで表示するランプを選べます";
 "Screen edge glow" = "画面の縁を光らせる";
 "Move board to" = "ボードの移動先";
 "%@ (main)" = "%@（メイン）";

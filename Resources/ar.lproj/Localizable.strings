@@ -67,6 +67,11 @@
 "Lamps only" = "المصابيح فقط";
 "Colors" = "الألوان";
 "Show what it's doing" = "عرض ما يفعله";
+"Hide “%@”" = "إخفاء «%@»";
+"Lamps to show" = "المصابيح المعروضة";
+"Show all" = "إظهار الكل";
+"All lamps hidden" = "كل المصابيح مخفية";
+"Right-click to choose which lamps to show" = "انقر بزر الماوس الأيمن لاختيار المصابيح التي تُعرض";
 "Screen edge glow" = "توهج حواف الشاشة";
 "Move board to" = "نقل اللوحة إلى";
 "%@ (main)" = "%@ (الرئيسية)";

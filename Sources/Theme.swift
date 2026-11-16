@@ -105,6 +105,11 @@ final class Prefs {
         get { defaults.object(forKey: "alwaysOnTop") as? Bool ?? true }
         set { defaults.set(newValue, forKey: "alwaysOnTop") }
     }
+    /// Projects (their folder paths) whose sessions get no lamp, sound or screen glow; picked in the menu.
+    var hiddenProjects: [String] {
+        get { defaults.stringArray(forKey: "hiddenProjects") ?? [] }
+        set { defaults.set(newValue, forKey: "hiddenProjects") }
+    }
     var hideWhenEmpty: Bool {
         get { defaults.bool(forKey: "hideWhenEmpty") }
         set { defaults.set(newValue, forKey: "hideWhenEmpty") }
