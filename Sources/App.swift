@@ -564,6 +564,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(ActionItem(L("Rate Watchlamp…")) { FormWindow.show(.review) })
         menu.addItem(ActionItem(L("Send a Suggestion…")) { FormWindow.show(.suggestion) })
         menu.addItem(ActionItem(L("Leave a Tip…")) { Website.tip() })
+        let maker = ActionItem(L("From the maker of ThermPort…")) { Website.thermport() }
+        maker.toolTip = L("ThermPort: a light Mac menu bar monitor for temperature, fans and more")
+        menu.addItem(maker)
         menu.addItem(.separator())
         menu.addItem(ActionItem(L("Quit Watchlamp")) { NSApp.terminate(nil) })
     }

@@ -50,7 +50,9 @@ menu; in Arabic the board is mirrored.
     100%, alerts play louder than other apps' sounds at the same system volume
   - Demo the three states (12 s, with three sample lamps on the board), Language
   - Check for Updates…; Rate Watchlamp… and Send a Suggestion… (sent from inside the app; approved reviews appear on
-    [Watchlamp's page](https://thermport.com/watchlamp/)); Leave a Tip… (opens the Lemon Squeezy checkout in your browser)
+    [Watchlamp's page](https://thermport.com/watchlamp/)); Leave a Tip… (opens the Lemon Squeezy checkout in your browser);
+    From the maker of ThermPort… (opens [thermport.com](https://thermport.com/): ThermPort is a light Mac menu bar monitor by the
+    same maker)
 - Several sessions in the same project show up as "project #1", "project #2". Hover over a lamp to see its full path.
 
 > Tip: when a MacBook's menu bar is crowded, macOS hides the icons that don't fit behind the notch. If you can't see the

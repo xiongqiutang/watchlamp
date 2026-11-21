@@ -85,6 +85,8 @@
 "Rate Watchlamp…" = "評價 Watchlamp…";
 "Send a Suggestion…" = "提建議…";
 "Leave a Tip…" = "打賞支持…";
+"From the maker of ThermPort…" = "出自 ThermPort 的開發者…";
+"ThermPort: a light Mac menu bar monitor for temperature, fans and more" = "ThermPort：一款輕量的 Mac 選單列溫度與系統監控工具";
 "Watchlamp %@ is available" = "Watchlamp %@ 已發佈";
 "You have %@. To update, download it, quit Watchlamp, and drag the new copy into Applications." = "你現在用的是 %@。更新方法：下載新版，結束 Watchlamp，再把新版拖進「應用程式」資料夾替換。";
 "Download" = "下載";

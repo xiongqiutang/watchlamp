@@ -85,6 +85,8 @@
 "Rate Watchlamp…" = "Avaliar o Watchlamp…";
 "Send a Suggestion…" = "Enviar uma sugestão…";
 "Leave a Tip…" = "Deixar uma gorjeta…";
+"From the maker of ThermPort…" = "Do criador do ThermPort…";
+"ThermPort: a light Mac menu bar monitor for temperature, fans and more" = "ThermPort: um monitor leve para a barra de menus do Mac: temperatura, ventoinhas e mais";
 "Watchlamp %@ is available" = "O Watchlamp %@ está disponível";
 "You have %@. To update, download it, quit Watchlamp, and drag the new copy into Applications." = "Você tem a versão %@. Para atualizar, baixe-a, encerre o Watchlamp e arraste a nova cópia para Aplicativos.";
 "Download" = "Baixar";

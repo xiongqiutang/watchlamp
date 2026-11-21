@@ -8,6 +8,11 @@ enum Website {
     static func tip() {
         NSWorkspace.shared.open(URL(string: "https://thermport.com/watchlamp/tip")!)
     }
+
+    /// "From the maker of ThermPort…": ThermPort's home page, in Chinese when Watchlamp speaks Chinese.
+    static func thermport() {
+        NSWorkspace.shared.open(URL(string: Lang.active.hasPrefix("zh") ? "https://thermport.com/zh/" : "https://thermport.com/")!)
+    }
 }
 
 /// Updates come from thermport.com/watchlamp/version.json, shaped {"version": "1.2", "url": "…"}: at launch and then

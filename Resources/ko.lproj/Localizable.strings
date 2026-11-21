@@ -85,6 +85,8 @@
 "Rate Watchlamp…" = "Watchlamp 평가하기…";
 "Send a Suggestion…" = "제안 보내기…";
 "Leave a Tip…" = "후원하기…";
+"From the maker of ThermPort…" = "ThermPort (같은 개발자)…";
+"ThermPort: a light Mac menu bar monitor for temperature, fans and more" = "ThermPort: 온도, 팬 등을 보여 주는 가벼운 Mac 메뉴 막대 모니터";
 "Watchlamp %@ is available" = "Watchlamp %@ 버전이 나왔습니다";
 "You have %@. To update, download it, quit Watchlamp, and drag the new copy into Applications." = "현재 버전은 %@입니다. 업데이트하려면 새 버전을 내려받고 Watchlamp를 종료한 뒤, 새 버전을 응용 프로그램 폴더로 드래그해 교체하세요.";
 "Download" = "다운로드";
